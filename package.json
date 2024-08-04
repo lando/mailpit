@@ -1,0 +1,18 @@
+{
+  "name": "@4lando/mailpit",
+  "description": "A Mailpit integration plugin for Lando.",
+  "version": "1.0.0-beta.1",
+  "author": "Aaron Feledy @AaronFeledy",
+  "license": "GPL-3.0",
+  "bugs": "https://github.com/4lando/mailpit/issues/new",
+  "homepage": "https://github.com/4lando/mailpit",
+  "keywords": [
+    "lando",
+    "lando-plugin",
+    "lando-service",
+    "mailpit"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
