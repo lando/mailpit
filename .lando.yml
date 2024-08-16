@@ -2,7 +2,8 @@ name: lando-mailpit-plugin
 
 services:
   node:
-    type: node:18
+    type: lando
+    image: node:18
     build:
       - npm install
     scanner: false
@@ -13,6 +14,3 @@ tooling:
     service: node
   npm:
     service: node
-
-plugins:
-  "@4lando/medic": .
