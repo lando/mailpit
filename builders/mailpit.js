@@ -1,9 +1,23 @@
 'use strict';
+/**
+ * Mailpit builder for Lando
+ * This module exports a configuration object for the Mailpit service in Lando.
+ */
+
 const _ = require('lodash');
 const path = require('path');
 
 module.exports = {
+  /**
+   * Name of the service
+   * @type {string}
+   */
   name: 'mailpit',
+
+  /**
+   * Default configuration for the Mailpit service
+   * @type {Object}
+   */
   config: {
     version: '1.20',
     supported: ['1.20'],
@@ -11,11 +25,32 @@ module.exports = {
     maxMessages: 1000,
     sources: [],
   },
+
+  /**
+   * Parent service
+   * @type {string}
+   */
   parent: '_service',
+
+  /**
+   * Builder function for the Mailpit service
+   * @param {Object} parent - The parent service class
+   * @param {Object} config - The configuration object
+   * @returns {Class} LandoMailpit - A class extending the parent service
+   */
   builder: (parent, config) => class LandoMailpit extends parent {
+    /**
+     * Constructor for the LandoMailpit class
+     * @param {string} id - The ID of the service
+     * @param {Object} options - Configuration options for the service
+     */
     constructor(id, options = {}) {
       options = _.merge({}, config, options);
 
+      /**
+       * Mailpit service configuration
+       * @type {Object}
+       */
       const mailpit = {
         image: `axllent/mailpit:v${options.version}`,
         command: '/mailpit',
@@ -32,10 +67,10 @@ module.exports = {
         ],
       };
 
-      // Change the me user
+      // Set the user to root
       options.meUser = 'root';
 
-      // Add in relayFrom info
+      // Add relayFrom information to options
       options.info = {relayFrom: options.relayFrom};
 
       // Configure other services to use Mailpit
@@ -50,10 +85,10 @@ module.exports = {
         });
       });
 
-      // Set the mailpit service
+      // Add the Mailpit service to the sources
       options.sources.push({services: _.set({}, options.name, mailpit)});
 
-      // Send it downstream
+      // Call the parent constructor with the processed options
       super(id, options, ..._.flatten(options.sources));
     }
   },
