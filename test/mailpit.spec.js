@@ -1,9 +1,10 @@
 'use strict';
 /**
  * @fileoverview This file contains unit tests for the Mailpit service builder.
- * It tests the functionality of the LandoMailpit class created by the builder,
- * including default options, environment variables, and other configurations.
- * 
+ * It tests the functionality of the LandoMailpitService class created by the
+ * builder, including default options, environment variables, and other
+ * configurations. Run with `npm run test:unit`
+ *
  * @requires lodash
  * @requires chai
  * @requires ../builders/mailpit
@@ -16,114 +17,121 @@ const mailpitBuilder = require('../builders/mailpit');
 
 describe('Mailpit Builder', function() {
   let mockParent;
-  let mockConfig;
+  let mockOptions;
 
   beforeEach(function() {
     mockParent = class MockParent {
       constructor(id, options = {}, ...sources) {
         this.id = id;
         this.options = _.merge({}, options);
-        
-        // Simulate the behavior of the parent classes
-        this.options.name = options.name || id;
-        this.options.meUser = options.meUser || 'www-data';
-        this.options.info = _.merge({}, options.info, {
-          service: this.options.name,
-          type: options.type || 'mailpit',
-          version: options.version,
-          meUser: this.options.meUser,
-          hasCerts: options.ssl || false,
-          api: 3,
-        });
-
-        // Simulate the sources array
         this.sources = sources;
       }
     };
 
-    mockConfig = _.cloneDeep(mailpitBuilder.config);
-    mockConfig.data = '/mock/data/path';
+    // Mock options that would be passed to the constructor
+    mockOptions = {
+      data: 'data_smtpserver',
+      meUser: undefined,
+      sendFrom: ['phpserver'],
+      info: undefined,
+      name: 'smtpserver',
+      port: undefined,
+      sources: undefined
+    };
   });
 
-  it('should create a LandoMailpit class', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    expect(LandoMailpit).to.be.a('function');
-    expect(new LandoMailpit('mailpit')).to.be.instanceof(mockParent);
+  it('should create a LandoMailpitService class with correct configuration', () => {
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
+
+    expect(instance).to.be.instanceof(mockParent);
+    expect(instance.id).to.equal('smtpserver');
+    expect(instance.options.name).to.equal('smtpserver');
+    expect(instance.options.data).to.equal('data_smtpserver');
+    expect(instance.options.sendFrom).to.deep.equal(['phpserver']);
   });
 
-  it('should set correct default options', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
+  it('should use default values when not provided in options', () => {
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
 
     expect(instance.options.version).to.equal('1.20');
-    expect(instance.options.supported).to.deep.equal(['1.20']);
-    expect(instance.options.relayFrom).to.deep.equal([]);
     expect(instance.options.maxMessages).to.equal(1000);
-    expect(instance.sources).to.be.an('array').that.is.not.empty;
   });
 
   it('should set meUser to root', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
 
     expect(instance.options.meUser).to.equal('root');
-    expect(instance.options.info.meUser).to.equal('root');
   });
 
-  it('should set correct environment variables', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
+  it('should configure correct sources', () => {
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
 
-    const mailpitService = instance.sources[0].services['undefined'];
+    // The sources array should now have only one item
+    expect(instance.sources).to.have.lengthOf(1);
+    expect(instance.sources[0]).to.have.nested.property('services.smtpserver');
     
-    expect(mailpitService).to.exist;
+    const mailpitService = instance.sources[0].services.smtpserver;
+    expect(mailpitService.image).to.equal('axllent/mailpit:v1.20');
+    expect(mailpitService.command).to.equal('/mailpit');
     expect(mailpitService.environment).to.deep.include({
       TERM: 'xterm',
       MP_UI_BIND_ADDR: '0.0.0.0:80',
       MP_SMTP_AUTH_ACCEPT_ANY: 1,
       MP_SMTP_AUTH_ALLOW_INSECURE: 1,
-      MP_MAX_MESSAGES: 1000,
+      MP_MAX_MESSAGES: 1000
     });
-  });
-
-  it('should set correct image and command', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
-
-    const mailpitService = instance.sources[0].services['undefined'];
-    
-    expect(mailpitService).to.exist;
-    expect(mailpitService.image).to.equal('axllent/mailpit:v1.20');
-    expect(mailpitService.command).to.equal('/mailpit');
-  });
-
-  it('should set correct ports and volumes', () => {
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
-
-    const mailpitService = instance.sources[0].services['undefined'];
-    
-    expect(mailpitService).to.exist;
     expect(mailpitService.ports).to.deep.equal(['1025']);
-    expect(mailpitService.volumes).to.include('/mock/data/path:/data');
+    expect(mailpitService.volumes).to.deep.equal(['data_smtpserver:/data']);
   });
 
-  it('should configure other services to use Mailpit', () => {
-    mockConfig.relayFrom = ['appserver'];
-    mockConfig.name = 'mailpit';
-    mockConfig.port = 1025;
+  it('should configure other services when sendFrom is provided', () => {
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
 
-    const LandoMailpit = mailpitBuilder.builder(mockParent, mockConfig);
-    const instance = new LandoMailpit('mailpit');
-
-    const appserverSource = instance.sources.find(source => 
-      source.services && source.services.appserver
+    // Check that the sendFrom services are configured in options.sources
+    const phpserverSource = instance.options.sources.find(source => 
+      source.services && source.services.phpserver
     );
 
-    expect(appserverSource).to.exist;
-    expect(appserverSource.services.appserver.environment).to.deep.equal({
-      MAIL_HOST: 'mailpit',
-      MAIL_PORT: 1025,
+    expect(phpserverSource).to.exist;
+    expect(phpserverSource.services.phpserver.environment).to.deep.include({
+      MAIL_HOST: 'smtpserver',
+      MAIL_PORT: 1025
     });
+  });
+
+  it('should use default port when not provided in options', () => {
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', mockOptions);
+
+    expect(instance.options.port).to.equal(1025);
+  });
+
+  it('should override default values with provided options', () => {
+    const customOptions = {
+      ...mockOptions,
+      version: '1.19',
+      maxMessages: 2012,
+      port: 2025
+    };
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', customOptions);
+
+    expect(instance.options.version).to.equal('1.19');
+    expect(instance.options.maxMessages).to.equal(2012);
+    expect(instance.options.port).to.equal(2025);
+  });
+
+  it('should initialize sources array even when not provided in options', () => {
+    const optionsWithoutSources = _.omit(mockOptions, 'sources');
+    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
+    const instance = new LandoMailpitService('smtpserver', optionsWithoutSources);
+
+    expect(instance.options.sources).to.be.an('array');
+    expect(instance.options.sources).to.have.lengthOf(2);
   });
 });

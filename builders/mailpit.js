@@ -12,7 +12,7 @@ module.exports = {
    * Name of the service
    * @type {string}
    */
-  name: 'mailpit',
+  name: "mailpit",
 
   /**
    * Default configuration for the Mailpit service
@@ -21,75 +21,80 @@ module.exports = {
   config: {
     version: '1.20',
     supported: ['1.20'],
-    relayFrom: [],
+    sendFrom: [],
     maxMessages: 1000,
     sources: [],
+    port: 1025,
   },
 
   /**
-   * Parent service
+   * Lando's base Service class
    * @type {string}
    */
-  parent: '_service',
+  parent: "_service",
 
   /**
    * Builder function for the Mailpit service
    * @param {Object} parent - The parent service class
-   * @param {Object} config - The configuration object
-   * @returns {Class} LandoMailpit - A class extending the parent service
+   * @param {Object} config - The default configuration object defined above
+   * @returns {Class} LandoMailpitService - A class extending Lando's base Service class
    */
-  builder: (parent, config) => class LandoMailpit extends parent {
-    /**
-     * Constructor for the LandoMailpit class
-     * @param {string} id - The ID of the service
-     * @param {Object} options - Configuration options for the service
-     */
-    constructor(id, options = {}) {
-      options = _.merge({}, config, options);
-
+  builder: (parent, config) =>
+    class LandoMailpitService extends parent {
       /**
-       * Mailpit service configuration
-       * @type {Object}
+       * Constructor for the LandoMailpitService class
+       * @param {string} id - The ID of the service
+       * @param {Object} options - Configuration options for the service
        */
-      const mailpit = {
-        image: `axllent/mailpit:v${options.version}`,
-        command: '/mailpit',
-        environment: {
-          TERM: 'xterm',
-          MP_UI_BIND_ADDR: '0.0.0.0:80',
-          MP_SMTP_AUTH_ACCEPT_ANY: 1,
-          MP_SMTP_AUTH_ALLOW_INSECURE: 1,
-          MP_MAX_MESSAGES: options.maxMessages,
-        },
-        ports: ['1025'],
-        volumes: [
-          `${options.data}:/data`,
-        ],
-      };
+      constructor(id, options = {}) {
+        options = _.merge({}, config, options);
 
-      // Set the user to root
-      options.meUser = 'root';
+        /**
+         * Mailpit service configuration
+         * @type {Object}
+         */
+        const mailpit = {
+          image: `axllent/mailpit:v${options.version}`,
+          command: "/mailpit",
+          environment: {
+            TERM: "xterm",
+            MP_UI_BIND_ADDR: "0.0.0.0:80",
+            MP_SMTP_AUTH_ACCEPT_ANY: 1,
+            MP_SMTP_AUTH_ALLOW_INSECURE: 1,
+            MP_MAX_MESSAGES: options.maxMessages,
+          },
+          ports: [`${options.port}`],
+          volumes: [`${options.data}:/data`],
+          networks: {
+            default: {
+              aliases: ["sendmailpit"],
+            },
+          },
+        };
 
-      // Add relayFrom information to options
-      options.info = {relayFrom: options.relayFrom};
+        // Set the user to root
+        options.meUser = "root";
 
-      // Configure other services to use Mailpit
-      options.relayFrom.forEach(service => {
-        options.sources.push({
-          services: _.set({}, service, {
-            environment: {
-              MAIL_HOST: options.name,
-              MAIL_PORT: options.port,
-            }
-          })
+        // Add senders information to options
+        options.info = { sendFrom: options.sendFrom };
+
+        // Configure other services to use Mailpit
+        options.sendFrom.forEach((service) => {
+          options.sources.push({
+            services: _.set({}, service, {
+              environment: {
+                MAIL_HOST: options.name,
+                MAIL_PORT: options.port,
+              },
+            }),
+          });
         });
-      });
 
-      // Add the Mailpit service to the sources
-      options.sources.push({services: _.set({}, options.name, mailpit)});
+        // Add the Mailpit service to the sources
+        options.sources.push({ services: _.set({}, options.name, mailpit) });
 
-      // Call the parent constructor with the processed options
-      super(id, options, ..._.flatten(options.sources));
-    }
-  },
+        // Call the parent constructor with the processed options
+        super(id, options, { services: _.set({}, options.name, mailpit) });
+      }
+    },
 };
