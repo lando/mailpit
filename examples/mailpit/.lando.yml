@@ -7,6 +7,10 @@ services:
     sendFrom:
       - phpserver
 
+proxy:
+  smtpserver:
+    - mailpit.lndo.site
+
 # This is important because it lets lando know to test against the plugin in this repo
 # DO NOT REMOVE THIS!
 plugins:

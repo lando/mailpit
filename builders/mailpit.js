@@ -19,10 +19,11 @@ module.exports = {
    * @type {Object}
    */
   config: {
-    version: '1.20',
-    supported: ['1.20'],
+    version: "1.20",
+    supported: ["1.20"],
+    confSrc: path.resolve(__dirname, "..", "config"),
     sendFrom: [],
-    maxMessages: 1000,
+    maxMessages: 500,
     sources: [],
     port: 1025,
   },
@@ -62,6 +63,7 @@ module.exports = {
             MP_SMTP_AUTH_ACCEPT_ANY: 1,
             MP_SMTP_AUTH_ALLOW_INSECURE: 1,
             MP_MAX_MESSAGES: options.maxMessages,
+            MP_DATABASE: "/data/mailpit.sqlite",
           },
           ports: [`${options.port}`],
           volumes: [`${options.data}:/data`],
@@ -86,6 +88,9 @@ module.exports = {
                 MAIL_HOST: options.name,
                 MAIL_PORT: options.port,
               },
+              volumes: [
+                `${options.confDest}/mailpit.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini`,
+              ],
             }),
           });
         });
@@ -94,7 +99,7 @@ module.exports = {
         options.sources.push({ services: _.set({}, options.name, mailpit) });
 
         // Call the parent constructor with the processed options
-        super(id, options, { services: _.set({}, options.name, mailpit) });
+        super(id, options, ..._.flatten(options.sources));
       }
     },
 };

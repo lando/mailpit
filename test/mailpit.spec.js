@@ -30,13 +30,15 @@ describe('Mailpit Builder', function() {
 
     // Mock options that would be passed to the constructor
     mockOptions = {
-      data: 'data_smtpserver',
+      data: "data_smtpserver",
       meUser: undefined,
-      sendFrom: ['phpserver'],
+      sendFrom: ["phpserver"],
       info: undefined,
-      name: 'smtpserver',
+      name: "smtpserver",
       port: undefined,
-      sources: undefined
+      sources: undefined,
+      confSrc: "/home/username/.lando/plugins/@4lando/mailpit/config",
+      confDest: "/home/username/.lando/config/mailpit",
     };
   });
 
@@ -51,38 +53,49 @@ describe('Mailpit Builder', function() {
     expect(instance.options.sendFrom).to.deep.equal(['phpserver']);
   });
 
-  it('should use default values when not provided in options', () => {
-    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
-    const instance = new LandoMailpitService('smtpserver', mockOptions);
+  it("should use default values when not provided in options", () => {
+    const LandoMailpitService = mailpitBuilder.builder(
+      mockParent,
+      mailpitBuilder.config
+    );
+    const instance = new LandoMailpitService("smtpserver", mockOptions);
 
-    expect(instance.options.version).to.equal('1.20');
-    expect(instance.options.maxMessages).to.equal(1000);
+    expect(instance.options.version).to.equal("1.20");
+    expect(instance.options.maxMessages).to.equal(500);
   });
 
-  it('should set meUser to root', () => {
-    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
-    const instance = new LandoMailpitService('smtpserver', mockOptions);
+  it("should set meUser to root", () => {
+    const LandoMailpitService = mailpitBuilder.builder(
+      mockParent,
+      mailpitBuilder.config
+    );
+    const instance = new LandoMailpitService("smtpserver", mockOptions);
 
-    expect(instance.options.meUser).to.equal('root');
+    expect(instance.options.meUser).to.equal("root");
   });
 
-  it('should configure correct sources', () => {
-    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
-    const instance = new LandoMailpitService('smtpserver', mockOptions);
+  it("should configure correct sources", () => {
+    const LandoMailpitService = mailpitBuilder.builder(
+      mockParent,
+      mailpitBuilder.config
+    );
+    const instance = new LandoMailpitService("smtpserver", mockOptions);
 
-    // The sources array should now have only one item
-    expect(instance.sources).to.have.lengthOf(1);
-    expect(instance.sources[0]).to.have.nested.property('services.smtpserver');
-    
-    const mailpitService = instance.sources[0].services.smtpserver;
-    expect(mailpitService.image).to.equal('axllent/mailpit:v1.20');
-    expect(mailpitService.command).to.equal('/mailpit');
+    // The sources array should now have two items
+    expect(instance.sources).to.have.lengthOf(2);
+    expect(instance.sources[0]).to.have.nested.property("services.phpserver");
+    expect(instance.sources[1]).to.have.nested.property("services.smtpserver");
+
+    const mailpitService = instance.sources[1].services.smtpserver;
+    expect(mailpitService.image).to.equal("axllent/mailpit:v1.20");
+    expect(mailpitService.command).to.equal("/mailpit");
     expect(mailpitService.environment).to.deep.include({
-      TERM: 'xterm',
-      MP_UI_BIND_ADDR: '0.0.0.0:80',
+      TERM: "xterm",
+      MP_UI_BIND_ADDR: "0.0.0.0:80",
       MP_SMTP_AUTH_ACCEPT_ANY: 1,
       MP_SMTP_AUTH_ALLOW_INSECURE: 1,
-      MP_MAX_MESSAGES: 1000
+      MP_MAX_MESSAGES: 500,
+      MP_DATABASE: "/data/mailpit.sqlite",
     });
     expect(mailpitService.ports).to.deep.equal(['1025']);
     expect(mailpitService.volumes).to.deep.equal(['data_smtpserver:/data']);
@@ -102,6 +115,10 @@ describe('Mailpit Builder', function() {
       MAIL_HOST: 'smtpserver',
       MAIL_PORT: 1025
     });
+
+    expect(phpserverSource.services.phpserver.volumes).to.deep.include(
+      '/home/username/.lando/config/mailpit/mailpit.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini'
+    );
   });
 
   it('should use default port when not provided in options', () => {
