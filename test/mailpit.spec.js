@@ -37,7 +37,7 @@ describe('Mailpit Builder', function() {
       name: "smtpserver",
       port: undefined,
       sources: undefined,
-      confSrc: "/home/username/.lando/plugins/@4lando/mailpit/config",
+      confSrc: "/home/username/.lando/plugins/@lando/mailpit/config",
       confDest: "/home/username/.lando/config/mailpit",
     };
   });
