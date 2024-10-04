@@ -1,87 +1,115 @@
 'use strict';
+
 /**
- * Mailpit builder for Lando
+ * @module mailpit
+ * @description Mailpit builder for Lando
  * This module exports a configuration object for the Mailpit service in Lando.
  */
 
 const _ = require('lodash');
 const path = require('path');
 
+/**
+ * @typedef {import('@lando/core/lib/services/service')} LandoService
+ */
+
+/**
+ * @typedef {object} MailpitConfig
+ * @property {string} version - Version of Mailpit to use
+ * @property {string[]} supported - Supported versions of Mailpit
+ * @property {string[]} sendFrom - Services to configure for sending mail to Mailpit
+ * @property {number} maxMessages - Maximum number of messages to store before truncating
+ * @property {number} port - SMTP port to use for sending mail to Mailpit
+ * @property {boolean} ssl - Whether to use SSL for the Mailpit UI
+ * @property {boolean} sslExpose - Whether to expose SSL localhost address
+ * @property {string} confSrc - Path to configuration sources
+ * @property {object[]} sources - Additional service configurations, internally used by Lando
+ */
+
+/**
+ * @type {object}
+ * @property {string} name - Name of the service
+ * @property {MailpitConfig} config - Default configuration for the Mailpit service
+ * @property {string} parent - Lando's base Service class name
+ * @property {function(LandoService, MailpitConfig): Function} builder - Builder function for the Mailpit service
+ */
 module.exports = {
   /**
    * Name of the service
    * @type {string}
    */
-  name: "mailpit",
+  name: 'mailpit',
 
   /**
    * Default configuration for the Mailpit service
-   * @type {Object}
+   * @type {object}
    */
   config: {
-    version: "1.20",
-    supported: ["1.20"],
-    confSrc: path.resolve(__dirname, "..", "config"),
+    version: '1.20',
+    supported: ['1.20'],
     sendFrom: [],
     maxMessages: 500,
-    sources: [],
     port: 1025,
+    ssl: true,
+    sslExpose: false,
+    confSrc: path.resolve(__dirname, '..', 'config'),
+    sources: [],
   },
 
   /**
    * Lando's base Service class
    * @type {string}
    */
-  parent: "_service",
+  parent: '_service',
 
   /**
    * Builder function for the Mailpit service
-   * @param {Object} parent - The parent service class
-   * @param {Object} config - The default configuration object defined above
-   * @returns {Class} LandoMailpitService - A class extending Lando's base Service class
+   * @param {LandoService} parent - The parent service class
+   * @param {MailpitConfig} config - The default configuration object defined above
+   * @returns {Function} - A constructor function for a class extending Lando's base Service class
    */
   builder: (parent, config) =>
     class LandoMailpitService extends parent {
       /**
        * Constructor for the LandoMailpitService class
        * @param {string} id - The ID of the service
-       * @param {Object} options - Configuration options for the service
+       * @param {MailpitConfig} options - Configuration options for the service
        */
       constructor(id, options = {}) {
         options = _.merge({}, config, options);
 
         /**
          * Mailpit service configuration
-         * @type {Object}
+         * @type {object}
          */
         const mailpit = {
           image: `axllent/mailpit:v${options.version}`,
-          command: "/mailpit",
+          command: '/mailpit',
           environment: {
-            TERM: "xterm",
-            MP_UI_BIND_ADDR: "0.0.0.0:80",
+            TERM: 'xterm',
+            MP_UI_BIND_ADDR: '0.0.0.0:80',
             MP_SMTP_AUTH_ACCEPT_ANY: 1,
             MP_SMTP_AUTH_ALLOW_INSECURE: 1,
             MP_MAX_MESSAGES: options.maxMessages,
-            MP_DATABASE: "/data/mailpit.sqlite",
+            MP_DATABASE: '/data/mailpit.sqlite',
           },
           ports: [`${options.port}`],
           volumes: [`${options.data}:/data`],
           networks: {
             default: {
-              aliases: ["sendmailpit"],
+              aliases: ['sendmailpit'],
             },
           },
         };
 
         // Set the user to root
-        options.meUser = "root";
+        options.meUser = 'root';
 
         // Add senders information to options
-        options.info = { sendFrom: options.sendFrom };
+        options.info = {sendFrom: options.sendFrom};
 
         // Configure other services to use Mailpit
-        options.sendFrom.forEach((service) => {
+        options.sendFrom.forEach(service => {
           options.sources.push({
             services: _.set({}, service, {
               environment: {
@@ -96,7 +124,7 @@ module.exports = {
         });
 
         // Add the Mailpit service to the sources
-        options.sources.push({ services: _.set({}, options.name, mailpit) });
+        options.sources.push({services: _.set({}, options.name, mailpit)});
 
         // Call the parent constructor with the processed options
         super(id, options, ..._.flatten(options.sources));

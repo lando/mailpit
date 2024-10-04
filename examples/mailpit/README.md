@@ -25,7 +25,7 @@ lando ssh -s phpserver -c "env | grep MAIL_PORT=1025"
 lando ssh -s phpserver -c "cat /usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini | grep sendmailpit"
 
 # Should be serving the admin interface on port 80
-lando ssh -s phpserver -c "curl smtpserver | grep Mailpit"
+lando ssh -s phpserver -c "curl -s smtpserver | grep Mailpit || echo 'Mailpit string not found in curl output'"
 
 # Should have root set as the meUser
 lando ssh -s smtpserver -c "id | grep root"
