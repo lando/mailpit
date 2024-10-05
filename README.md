@@ -6,7 +6,6 @@ This is a work in progress. PRs and feedback are appreciated!
 ## Known Issues
 
 - Mailpit web UI is not served over HTTPS.
-- `sendmail` command is not yet working.
 
 ## Developer Information
 
@@ -41,7 +40,7 @@ This repository is structured as follows:
 - `builders/`: Contains the main service builder for the Mailpit plugin.
 - `config/`: Contains configuration files used by the Mailpit plugin.
 - `test/`: Contains unit test files.
-- `examples/`: Example configurations and usage scenarios.
+- `examples/`: Example configurations and usage scenarios executed by Leia for testing.
 
 ### Linting
 
@@ -69,7 +68,8 @@ This project uses Mocha for unit testing. To run the tests, follow these steps:
 
 The test files are located in the `test` directory. The main test file for the Mailpit builder is `test/mailpit.spec.js`.
 
-We also use Leia for testing examples. To run these tests:
+We also use [Leia](https://github.com/lando/leia) for integration testing. Leia steps through the README files in the `examples` directory,
+executes the examples as if they were a user, and validates things are rolling as they should. To run these tests:
 
 ```bash
 npm run test:leia

@@ -8,6 +8,7 @@
 
 const _ = require('lodash');
 const path = require('path');
+const addBuildStep = require('../utils/addBuildStep');
 
 /**
  * @typedef {import('@lando/core/lib/services/service')} LandoService
@@ -42,7 +43,7 @@ module.exports = {
 
   /**
    * Default configuration for the Mailpit service
-   * @type {object}
+   * @type {MailpitConfig}
    */
   config: {
     version: '1.20',
@@ -52,6 +53,9 @@ module.exports = {
     port: 1025,
     ssl: true,
     sslExpose: false,
+    scanner: {
+      okCodes: [200],
+    },
     confSrc: path.resolve(__dirname, '..', 'config'),
     sources: [],
   },
@@ -94,7 +98,9 @@ module.exports = {
             MP_DATABASE: '/data/mailpit.sqlite',
           },
           ports: [`${options.port}`],
-          volumes: [`${options.data}:/data`],
+          volumes: [
+            `${options.data}:/data`,
+          ],
           networks: {
             default: {
               aliases: ['sendmailpit'],
@@ -108,10 +114,19 @@ module.exports = {
         // Add senders information to options
         options.info = {sendFrom: options.sendFrom};
 
+        // Add build step to copy the `/mailpit` binary to the `/helpers`
+        // directory so that it can be used by other services.
+        const buildSteps = [
+          'cp -f /mailpit /helpers',
+          'OWNER=$(stat -c "%u:%g" /helpers) && chown $OWNER /helpers/mailpit',
+        ];
+        addBuildStep(buildSteps, options._app, options.name, 'build_as_root_internal');
+
         // Configure other services to use Mailpit
         options.sendFrom.forEach(service => {
           options.sources.push({
             services: _.set({}, service, {
+              depends_on: [options.name],
               environment: {
                 MAIL_HOST: options.name,
                 MAIL_PORT: options.port,

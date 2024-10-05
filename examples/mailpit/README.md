@@ -30,10 +30,6 @@ lando ssh -s phpserver -c "curl -s smtpserver | grep Mailpit || echo 'Mailpit st
 # Should have root set as the meUser
 lando ssh -s smtpserver -c "id | grep root"
 
-# Should be able to collect messages sent from the phpserver
-lando ssh -s phpserver -c "php /app/mail.php"
-lando ssh -s smtpserver -c "wget localhost/api/v1/messages -qO - | grep recipient@example.com"
-
 # Should have the correct max messages set
 lando ssh -s smtpserver -c "env | grep MP_MAX_MESSAGES=500"
 
@@ -43,6 +39,15 @@ lando ssh -s smtpserver -c "env | grep MP_SMTP_AUTH_ALLOW_INSECURE=1"
 
 # Should have the correct database file
 lando ssh -s smtpserver -c "ls -l /data/mailpit.sqlite"
+
+# Should have the mailpit binary in the helpers directory
+lando ssh -s phpserver -c "ls -l /helpers/mailpit"
+
+# Should be able to send messages to the SMTP server
+lando ssh -s phpserver -c "php /app/mail.php"
+
+# Should be able to retrieve messages from the SMTP server
+lando ssh -s smtpserver -c "wget localhost/api/v1/messages -qO - | grep recipient@example.com"
 ```
 
 Destroy tests
