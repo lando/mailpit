@@ -3,10 +3,6 @@ A [Mailpit](https://mailpit.axllent.org) integration plugin for Lando.
 
 This is a work in progress. PRs and feedback are appreciated!
 
-## Known Issues
-
-- Mailpit web UI is not served over HTTPS.
-
 ## Developer Information
 
 To get started with this project, follow these steps:

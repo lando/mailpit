@@ -9,6 +9,7 @@
 const _ = require('lodash');
 const path = require('path');
 const addBuildStep = require('../utils/addBuildStep');
+const setConfigOptions = require('../utils/setConfigOptions');
 
 /**
  * @typedef {import('@lando/core/lib/services/service')} LandoService
@@ -51,11 +52,6 @@ module.exports = {
     sendFrom: [],
     maxMessages: 500,
     port: 1025,
-    ssl: true,
-    sslExpose: false,
-    scanner: {
-      okCodes: [200],
-    },
     confSrc: path.resolve(__dirname, '..', 'config'),
     sources: [],
   },
@@ -114,6 +110,13 @@ module.exports = {
         // Add senders information to options
         options.info = {sendFrom: options.sendFrom};
 
+        // Set configuration options for the Lando service
+        setConfigOptions({
+          ssl: true,
+          sslExpose: false,
+          scanner: {okCodes: [200]},
+        }, options._app, options.name);
+
         // Add build step to copy the `/mailpit` binary to the `/helpers`
         // directory so that it can be used by other services.
         const buildSteps = [
@@ -126,7 +129,6 @@ module.exports = {
         options.sendFrom.forEach(service => {
           options.sources.push({
             services: _.set({}, service, {
-              depends_on: [options.name],
               environment: {
                 MAIL_HOST: options.name,
                 MAIL_PORT: options.port,
