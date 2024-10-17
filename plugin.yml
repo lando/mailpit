@@ -1,2 +1,3 @@
 name: "@lando/mailpit"
-api: 3
+services:
+  mailpit: ./builders/mailpit.js

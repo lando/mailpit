@@ -118,9 +118,10 @@ module.exports = {
         }, options._app, options.name);
 
         // Add build step to copy the `/mailpit` binary to the `/helpers`
-        // directory so that it can be used by other services.
+        // directory so that it can be used by other services, then set the
+        // owner to match the parent directory to avoid permission issues.
         const buildSteps = [
-          'cp -f /mailpit /helpers',
+          'cp -f /mailpit /helpers &&' +
           'OWNER=$(stat -c "%u:%g" /helpers) && chown $OWNER /helpers/mailpit',
         ];
         addBuildStep(buildSteps, options._app, options.name, 'build_as_root_internal');
@@ -134,7 +135,7 @@ module.exports = {
                 MAIL_PORT: options.port,
               },
               volumes: [
-                `${options.confDest}/mailpit.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini`,
+                `${options.confDest}/php.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini`,
               ],
             }),
           });
