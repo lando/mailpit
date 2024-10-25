@@ -3,6 +3,22 @@ A [Mailpit](https://mailpit.axllent.org) integration plugin for Lando.
 
 This is a work in progress. PRs and feedback are appreciated!
 
+## Installation
+
+Install the Mailpit plugin:
+```bash
+lando plugin-add @lando/mailpit
+```
+
+Add a mailpit service to your project:
+```yaml
+services:
+  mailpit:
+    type: mailpit
+    mailFrom:
+      - appserver
+```
+
 ## Developer Information
 
 To get started with this project, follow these steps:
