@@ -3,7 +3,7 @@ name: lando-mailpit-plugin
 services:
   node:
     type: lando
-    image: node:18
+    image: node:20
     build:
       - npm install
     scanner: false
