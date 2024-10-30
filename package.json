@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.25.7",
-    "@lando/core": "^3.21.2",
+    "@lando/core": "^3.23.1",
     "@lando/leia": "^1.0.0-beta.4",
     "@oclif/core": "^4.0.31",
     "chai": "^4.5.0",
