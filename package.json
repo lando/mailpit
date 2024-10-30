@@ -1,7 +1,7 @@
 {
   "name": "@lando/mailpit",
   "description": "A Mailpit integration plugin for Lando.",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.3",
   "author": "Aaron Feledy @AaronFeledy",
   "license": "GPL-3.0",
   "bugs": "https://github.com/lando/mailpit/issues/new",
@@ -47,12 +47,14 @@
     "@babel/eslint-parser": "^7.25.7",
     "@lando/core": "^3.21.2",
     "@lando/leia": "^1.0.0-beta.4",
+    "@oclif/core": "^4.0.31",
     "chai": "^4.5.0",
     "eslint": "^9.12.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^50.3.1",
     "mocha": "^9.1.3",
     "nyc": "^15.1.0",
+    "sinon": "^19.0.2",
     "yaml": "^2.6.0"
   }
 }

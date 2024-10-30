@@ -47,6 +47,13 @@ describe('mailpit task', () => {
         info: logSpy,
         error: errorSpy,
       },
+      cli: {
+        getUX: () => ({
+          log: logSpy,
+          error: errorSpy,
+          exit: sinon.spy(),
+        }),
+      },
     };
   });
 
