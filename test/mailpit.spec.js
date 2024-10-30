@@ -3,9 +3,7 @@
 /**
  * @file Unit tests for the Mailpit service builder.
  * @module test/mailpit.spec
- */
-
-/**
+ *
  * This file contains unit tests for the Mailpit service builder.
  * It tests the functionality of the LandoMailpitService class created by the
  * builder, including default options, environment variables, and other

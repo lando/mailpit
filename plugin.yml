@@ -1,3 +1,5 @@
 name: "@lando/mailpit"
 services:
   mailpit: ./builders/mailpit.js
+tasks:
+  mailpit: ./tasks/mailpit.js

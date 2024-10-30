@@ -9,9 +9,10 @@ This is a work in progress. PRs and feedback are appreciated!
 - [x] Mailpit UI accessible at http and https routes.
 - [x] Automatic configuration of services to send mail to Mailpit.
 - [x] Automatic installation of Mailpit sendmail client and configuration into services that need it.
+- [x] A `lando mailpit` command that shows connection information.
 - [ ] Automatic proxy configuration for the Mailpit UI.
 - [ ] A global mailpit service that multiple apps can use.
-- [ ] A `lando mailpit` command that interacts with the mailpit service.
+- [ ] `lando mailpit` subcommands that interact with the mailpit service.
 - [ ] Automatic configuration of popular frameworks to send mail to Mailpit.
 - [ ] Add a mailpit service to a recipe with a single line of configuration.
 
@@ -53,6 +54,15 @@ mail($to, $subject, $message, implode("\r\n", $headers));
 // http://mailpit.mysite.lndo.site
 ```
 
+## Commands
+
+### `lando mailpit`
+
+Shows connection information for the Mailpit service, including:
+- SMTP server host and port
+- Pre-configured services that use sendmail
+- Environment variables available for custom configurations
+
 ## Contributing
 
 To get started with contributing to this project, follow these steps:
@@ -85,6 +95,7 @@ This repository is structured as follows:
 
 - `builders/`: Contains the main service builder for the Mailpit plugin.
 - `config/`: Contains configuration files used in services managed by the Mailpit plugin.
+- `tasks/`: Contains Lando command implementations.
 - `test/`: Contains unit test files.
 - `examples/`: Example configurations and usage scenarios executed by Leia for testing.
 - `utils/`: Utility functions used by the Mailpit plugin.
@@ -113,7 +124,9 @@ This project uses Mocha for unit testing. To run the tests, follow these steps:
    npm run test:unit
    ```
 
-The test files are located in the `test` directory. The main test file for the Mailpit builder is `test/mailpit.spec.js`.
+The test files are located in the `test` directory. The main test files include:
+- `test/mailpit.spec.js` - Tests for the Mailpit builder
+- `test/mailpitTask.spec.js` - Tests for the mailpit command
 
 We also use [Leia](https://github.com/lando/leia) for integration testing. Leia steps through the README files in the `examples` directory,
 executes the examples as if they were a user, and validates things are rolling as they should. To run these tests:
