@@ -39,7 +39,7 @@ describe('Mailpit Builder', function() {
     mockOptions = {
       data: 'data_smtpserver',
       meUser: undefined,
-      sendFrom: ['phpserver'],
+      mailFrom: ['phpserver'],
       info: undefined,
       name: 'smtpserver',
       port: undefined,
@@ -57,7 +57,7 @@ describe('Mailpit Builder', function() {
     expect(instance.id).to.equal('smtpserver');
     expect(instance.options.name).to.equal('smtpserver');
     expect(instance.options.data).to.equal('data_smtpserver');
-    expect(instance.options.sendFrom).to.deep.equal(['phpserver']);
+    expect(instance.options.mailFrom).to.deep.equal(['phpserver']);
   });
 
   it('should use default values when not provided in options', () => {
@@ -108,11 +108,11 @@ describe('Mailpit Builder', function() {
     expect(mailpitService.volumes).to.deep.equal(['data_smtpserver:/data']);
   });
 
-  it('should configure other services when sendFrom is provided', () => {
+  it('should configure other services when mailFrom is provided', () => {
     const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
     const instance = new LandoMailpitService('smtpserver', mockOptions);
 
-    // Check that the sendFrom services are configured in options.sources
+    // Check that the mailFrom services are configured in options.sources
     const phpserverSource = instance.options.sources.find(source =>
       source.services && source.services.phpserver,
     );

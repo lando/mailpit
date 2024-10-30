@@ -19,7 +19,7 @@ const setConfigOptions = require('../utils/setConfigOptions');
  * @typedef {object} MailpitConfig
  * @property {string} version - Version of Mailpit to use
  * @property {string[]} supported - Supported versions of Mailpit
- * @property {string[]} sendFrom - Services to configure for sending mail to Mailpit
+ * @property {string[]} mailFrom - Services to configure for sending mail to Mailpit
  * @property {number} maxMessages - Maximum number of messages to store before truncating
  * @property {number} port - SMTP port to use for sending mail to Mailpit
  * @property {boolean} ssl - Whether to use SSL for the Mailpit UI
@@ -49,7 +49,7 @@ module.exports = {
   config: {
     version: '1.20',
     supported: ['1.20'],
-    sendFrom: [],
+    mailFrom: [],
     maxMessages: 500,
     port: 1025,
     confSrc: path.resolve(__dirname, '..', 'config'),
@@ -108,7 +108,7 @@ module.exports = {
         options.meUser = 'root';
 
         // Add senders information to options
-        options.info = {sendFrom: options.sendFrom};
+        options.info = {mailFrom: options.mailFrom};
 
         // Set configuration options for the Lando service
         setConfigOptions({
@@ -127,7 +127,7 @@ module.exports = {
         addBuildStep(buildSteps, options._app, options.name, 'build_as_root_internal');
 
         // Configure other services to use Mailpit
-        options.sendFrom.forEach(service => {
+        options.mailFrom.forEach(service => {
           options.sources.push({
             services: _.set({}, service, {
               environment: {

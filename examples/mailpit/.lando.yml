@@ -4,7 +4,7 @@ services:
     type: php:8.2
   smtpserver:
     type: mailpit
-    sendFrom:
+    mailFrom:
       - phpserver
 
 # This is important because it lets lando know to test against the plugin in this repo
