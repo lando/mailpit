@@ -114,7 +114,7 @@ describe('Mailpit Builder', function() {
 
     // Check that the mailFrom services are configured in options.sources
     const phpserverSource = instance.options.sources.find(source =>
-      source.services && source.services.phpserver,
+      source.services?.phpserver,
     );
 
     expect(phpserverSource).to.exist;
@@ -124,7 +124,7 @@ describe('Mailpit Builder', function() {
     });
 
     expect(phpserverSource.services.phpserver.volumes).to.deep.include(
-        '/home/username/.lando/config/mailpit/mailpit.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini',
+        '/home/username/.lando/config/mailpit/php.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini',
     );
   });
 
