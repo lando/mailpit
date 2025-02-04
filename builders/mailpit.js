@@ -29,7 +29,8 @@ const setConfigOptions = require('../utils/setConfigOptions');
  */
 
 /**
- * @type {object}
+  version: '1.22',
+  supported: ['1.22'],
  * @property {string} name - Name of the service
  * @property {MailpitConfig} config - Default configuration for the Mailpit service
  * @property {string} parent - Lando's base Service class name
