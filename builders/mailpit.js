@@ -110,7 +110,7 @@ module.exports = {
             MP_MAX_MESSAGES: options.maxMessages,
             MP_DATABASE: '/data/mailpit.sqlite',
           },
-          ports: [`${options.port}`],
+          ports: ['80'],
           volumes: [
             `${options.data}:/data`,
           ],

@@ -1,11 +1,11 @@
-name: example-mailpit
+name: mailpit-basic
+recipe: lamp
+config:
+  php: 8.4
+
 services:
-  phpserver:
-    type: php:8.2
   smtpserver:
     type: mailpit
-    mailFrom:
-      - phpserver
 
 # This is important because it lets lando know to test against the plugin in this repo
 # DO NOT REMOVE THIS!
