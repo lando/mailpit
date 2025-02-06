@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * @module mailpit
- * @description Mailpit builder for Lando
+ * @module builders/mailpit
+ * @description Mailpit service builder for Lando
  * This module exports a configuration object for the Mailpit service in Lando.
  */
 
@@ -29,12 +29,32 @@ const setConfigOptions = require('../utils/setConfigOptions');
  */
 
 /**
+ * @type {MailpitConfig}
+ */
+const defaultConfig = {
   version: '1.22',
   supported: ['1.22'],
+  mailFrom: ['appserver'],
+  maxMessages: 500,
+  port: 1025,
+  ssl: true,
+  sslExpose: false,
+  scanner: {okCodes: [200]},
+  confSrc: path.resolve(__dirname, '..', 'config'),
+  sources: [],
+};
+
+/**
+ * @typedef {object} MailpitService
+ * @augments {LandoService}
  * @property {string} name - Name of the service
  * @property {MailpitConfig} config - Default configuration for the Mailpit service
  * @property {string} parent - Lando's base Service class name
  * @property {function(LandoService, MailpitConfig): Function} builder - Builder function for the Mailpit service
+ */
+
+/**
+ * @type {MailpitService}
  */
 module.exports = {
   /**
@@ -47,15 +67,7 @@ module.exports = {
    * Default configuration for the Mailpit service
    * @type {MailpitConfig}
    */
-  config: {
-    version: '1.20',
-    supported: ['1.20'],
-    mailFrom: [],
-    maxMessages: 500,
-    port: 1025,
-    confSrc: path.resolve(__dirname, '..', 'config'),
-    sources: [],
-  },
+  config: defaultConfig,
 
   /**
    * Lando's base Service class
@@ -65,19 +77,23 @@ module.exports = {
 
   /**
    * Builder function for the Mailpit service
+   * @type {function(LandoService, MailpitConfig): Function}
    * @param {LandoService} parent - The parent service class
-   * @param {MailpitConfig} config - The default configuration object defined above
+   * @param {MailpitConfig} defaultConfig - The default configuration values defined in MailpitService.config
    * @returns {Function} - A constructor function for a class extending Lando's base Service class
    */
-  builder: (parent, config) =>
+  builder: (parent, defaultConfig) =>
     class LandoMailpitService extends parent {
       /**
        * Constructor for the LandoMailpitService class
        * @param {string} id - The ID of the service
-       * @param {MailpitConfig} options - Configuration options for the service
+       * @param {MailpitConfig} userConfig - The populated configuration options for the service
        */
-      constructor(id, options = {}) {
-        options = _.merge({}, config, options);
+      constructor(id, userConfig = {}) {
+        const debug = userConfig._app.log.debug;
+
+        // Merge the user config onto the default config
+        const options = _.merge({}, defaultConfig, userConfig);
 
         /**
          * Mailpit service configuration
@@ -111,11 +127,11 @@ module.exports = {
         // Add senders information to options
         options.info = {mailFrom: options.mailFrom};
 
-        // Set configuration options for the Lando service
+        // Set configuration options for the upstream Lando service
         setConfigOptions({
-          ssl: true,
-          sslExpose: false,
-          scanner: {okCodes: [200]},
+          ssl: options.ssl,
+          sslExpose: options.sslExpose,
+          scanner: options.scanner,
         }, options._app, options.name);
 
         // Add build step to copy the `/mailpit` binary to the `/helpers`
@@ -127,8 +143,20 @@ module.exports = {
         ];
         addBuildStep(buildSteps, options._app, options.name, 'build_as_root_internal');
 
-        // Configure other services to use Mailpit
-        options.mailFrom.forEach(service => {
+        // Validate and configure services to use Mailpit
+        const existingServices = Object.keys(options._app.config.services);
+        const validServices = options.mailFrom.filter(service => {
+          const exists = existingServices.includes(service);
+          if (!exists) {
+            debug(`Service "${service}" specified in mailFrom does not exist. Skipping mail configuration.`);
+          } else if (service === options.name) {
+            debug(`Skipping mail configuration for ${service} as it is the mailpit service itself.`);
+          }
+          return exists;
+        });
+
+        validServices.forEach(service => {
+          debug(`Configuring mail settings for ${service}`);
           options.sources.push({
             services: _.set({}, service, {
               environment: {
