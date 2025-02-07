@@ -58,4 +58,9 @@ module.exports = [
       'jsdoc/valid-types': 'error',
     },
   },
+  {
+    ignores: [
+      'docs/.vitepress/cache/',
+    ],
+  },
 ];

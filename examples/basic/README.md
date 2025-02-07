@@ -29,7 +29,7 @@ lando exec appserver -- env | grep MAIL_PORT= | tee >(cat 1>&2) | grep -q MAIL_P
 lando exec appserver -- cat /usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini | grep -q sendmailpit || echo 'invalid php.ini' 1>&2
 
 # Should be serving the admin interface on port 80
-lando exec appserver -- curl -s smtpserver | grep -q Mailpit || echo 'string `Mailpit` not found' 1>&2
+lando exec appserver -- curl -s smtpserver | grep -q Mailpit || echo 'string \`Mailpit\` not found' 1>&2
 
 # Should have root set as the meUser
 lando exec smtpserver -- id | tee >(cat 1>&2) | grep -q root

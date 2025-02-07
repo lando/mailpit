@@ -12,7 +12,7 @@ const addBuildStep = require('../utils/addBuildStep');
 const setConfigOptions = require('../utils/setConfigOptions');
 
 /**
- * @typedef {import('@lando/core/lib/services/service')} LandoService
+ * @typedef {import('@lando/core/builders/_service')} LandoService
  */
 
 /**

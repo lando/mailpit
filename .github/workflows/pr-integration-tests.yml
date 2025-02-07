@@ -13,8 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         leia-test:
-          - examples/mailpit
+          - examples/basic
         lando-version:
+          - 3-stable
           - 3-edge
         os:
           - ubuntu-24.04
