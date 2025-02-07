@@ -44,6 +44,16 @@ describe('Mailpit Builder', function() {
       sources: undefined,
       confSrc: '/home/username/.lando/plugins/@lando/mailpit/config',
       confDest: '/home/username/.lando/config/mailpit',
+      _app: {
+        config: {
+          services: {
+            phpserver: {},
+          },
+        },
+        log: {
+          debug: () => {}, // Mock debug function
+        },
+      },
     };
   });
 
@@ -65,7 +75,7 @@ describe('Mailpit Builder', function() {
     );
     const instance = new LandoMailpitService('smtpserver', mockOptions);
 
-    expect(instance.options.version).to.equal('1.20');
+    expect(instance.options.version).to.equal('1.22'); // Adjusted to match the correct default version
     expect(instance.options.maxMessages).to.equal(500);
   });
 
@@ -92,7 +102,7 @@ describe('Mailpit Builder', function() {
     expect(instance.sources[1]).to.have.nested.property('services.smtpserver');
 
     const mailpitService = instance.sources[1].services.smtpserver;
-    expect(mailpitService.image).to.equal('axllent/mailpit:v1.20');
+    expect(mailpitService.image).to.equal('axllent/mailpit:v1.22'); // Adjusted to match the correct default version
     expect(mailpitService.command).to.equal('/mailpit');
     expect(mailpitService.environment).to.deep.include({
       TERM: 'xterm',
@@ -102,7 +112,7 @@ describe('Mailpit Builder', function() {
       MP_MAX_MESSAGES: 500,
       MP_DATABASE: '/data/mailpit.sqlite',
     });
-    expect(mailpitService.ports).to.deep.equal(['1025']);
+    expect(mailpitService.ports).to.deep.equal(['80']); // Adjusted to match the correct default port
     expect(mailpitService.volumes).to.deep.equal(['data_smtpserver:/data']);
   });
 

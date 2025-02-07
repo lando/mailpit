@@ -26,6 +26,10 @@ export default defineConfig({
   },
 });
 
+/**
+ * Generates the sidebar configuration for the documentation.
+ * @returns {Array} An array of sidebar items.
+ */
 function sidebar() {
   return [
     {

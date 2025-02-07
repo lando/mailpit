@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /**
  * Send a test email using PHP's mail function.

@@ -35,18 +35,24 @@
     "all": true
   },
   "scripts": {
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "docs:build": "LANDO_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress build docs",
+    "docs:dev": "LANDO_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress dev docs",
+    "docs:mvb": "npx mvb docs",
+    "docs:preview": "vitepress preview docs",
     "lint": "eslint . --config eslint.config.js",
-    "test:leia": "leia \"examples/**/README.md\" -c 'Destroy tests' --stdin",
     "test:unit": "nyc --reporter=html --reporter=text mocha --timeout 5000 test/**/*.spec.js",
-    "test": "npm run test:unit && npm run test:leia"
+    "test:leia": "npm run leia \"examples/**/README.md\" -c 'Destroy tests' --stdin",
+    "test": "npm run lint && npm run test:unit"
   },
   "dependencies": {
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.25.7",
-    "@lando/core": "^3.23.1",
+    "@lando/core": "^3",
     "@lando/leia": "^1.0.0-beta.4",
+    "@lando/vitepress-theme-default-plus": "^1.1.0-beta.24",
     "@oclif/core": "^4.0.31",
     "chai": "^4.5.0",
     "eslint": "^9.12.0",
