@@ -1,0 +1,16 @@
+name: mailpit-advanced
+
+proxy:
+  smtpserver:
+    - advanced.lndo.site/mailpit
+
+services:
+  phpserver:
+    type: php:8.2
+
+  smtpserver:
+    type: mailpit:1.22
+    maxMessages: 54321
+    port: 2025
+    mailFrom:
+      - phpserver
