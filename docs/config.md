@@ -11,60 +11,70 @@ Also note that options, in addition to the [build steps](https://docs.lando.dev/
 
 ```yaml
 services:
-  pitformail:
-    type: mailpit:1.22
-    mailFrom: # Optional. The services to send mail from. Defaults to appserver.
-      - appserver
-```
-
-## Port forwarding
-
-`portforward` will allow you to access this service externally by assigning a port directly on your host's `localhost`. Note that `portforward` can be set to either `true` or a specific `port` but we *highly recommend* you set it to `true` unless you have pretty good knowledge of how port assignment works or you have a **very** compelling reason for needing a locked down port.
-
-`portforward: true` will prevent inevitable port collisions and provide greater reliability and stability across Lando apps. That said, one downside of `portforward: true` is that Docker will assign a different port every time you restart your application. You can read more about accessing services externally [over here](https://docs.lando.dev/guides/external-access.html).
-
-`tl;dr`
-
-**Recommended**
-
-```yaml
-services:
-  myservice:
-    type: mailpit:1.22
-    portforward: true
-```
-
-**Not recommended**
-
-```yaml
-services:
-  myservice:
-    type: mailpit:1.22
-    portforward: 1025
-```
-
-## Sending Mail
-
-You will need to list the services the wish to send mail from using the `mailFrom` config key. If an `appserver` service exists in your app, it will be included by default. Note that the services in the list should be other services in your application. They can be discovered by running [lando info](https://docs.lando.dev/cli/info.html).
-
-::: warning Config may differ!
-While we will automatically configure the underlying `mail` binary for any `php` service you choose to `mailFrom`, you may need to consult the documentation for the specific type of service you are choosing to send mail from.
-:::
-
-An example of a Landofile's `services` config that mails from a `php` service called `myphp` is shown below:
-
-```yaml
-services:
-  mypit:
+  mailpit:
     type: mailpit:1.22
     mailFrom:
-      - myphp
-  myphp:
+      - appserver
+    maxMessages: 500
+    port: 1025
+```
+
+## Configuration Options
+
+### mailFrom
+
+The `mailFrom` config key lets you specify which services should be configured to send mail through Mailpit. While this configuration is optional, it enables automatic setup of mail sending capabilities in the specified services.
+
+When services are listed under `mailFrom`, Lando will:
+1. Install the `mailpit` binary as a [`sendmail` replacement](https://mailpit.axllent.org/docs/install/sendmail/) at `/helpers/mailpit`
+2. Configure environment variables (`MAIL_HOST` and `MAIL_PORT`) for SMTP access
+3. For PHP services, configure php.ini to use the Mailpit sendmail binary, enabling PHP's built-in `mail()` function to automatically route through Mailpit
+
+If you have an `appserver` service in your application, it will be automatically added to `mailFrom` by default. You can discover available services by running [lando info](https://docs.lando.dev/cli/info.html).
+
+Example configuration with explicit mail service setup:
+
+```yaml
+services:
+  mailpit:
+    type: mailpit:1.22
+    mailFrom:
+      - phpapp
+  phpapp:
     type: php
 ```
 
-Note that we will install the `mailpit` binary at `/helpers/mailpit` in each `mailFrom` service for you to use. Each of these services should also be able to access the Mailpit STMP server using the `MAIL_HOST` and `MAIL_PORT` environment variables.
+### maxMessages
 
-## Getting information
+The maximum number of messages to store before truncating. Must be at least 1.
 
-You can get connection and credential information about your Mailpit instance by running [`lando info`](https://docs.lando.dev/cli/info.html). It may also be worth checking out our [accessing services externally guide](https://docs.lando.dev/guides/external-access.html).
+```yaml
+services:
+  mailpit:
+    type: mailpit:1.22
+    maxMessages: 1000  # Store up to 1000 messages
+```
+
+### port
+
+The SMTP port to use for sending mail to Mailpit. Must be between 1 and 65535.
+
+```yaml
+services:
+  mailpit:
+    type: mailpit:1.22
+    port: 2525  # Use custom SMTP port
+```
+
+## Port Forwarding
+
+### portforward
+
+This option is inherited from the `lando` base service. It allows external access to the service by mapping a port on your host's `localhost`. For more details, refer to the [Lando documentation on external access](https://docs.lando.dev/guides/external-access.html).
+
+```yaml
+services:
+  mailpit:
+    type: mailpit:1.22
+    portforward: true
+```

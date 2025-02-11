@@ -4,23 +4,77 @@ description: Add a configurable Mailpit service to Lando for local development w
 next: ./config.html
 ---
 
-# Mailpit
+# Mailpit Integration for Lando
 
-[Mailpit](https://github.com/axllent/mailpit) is an email testing tool for developers.
+The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Lando](https://lando.dev). Mailpit is a modern email testing tool for developers that makes it easy to test email sending in your local development environment.
 
-You can easily add it to your Lando app by adding an entry to the [services](https://docs.lando.dev/services/lando-3.html) top-level config in your [Landofile](https://docs.lando.dev/landofile/).
+## Features
+
+- A Mailpit service for receiving emails
+- Mailpit UI accessible at http and https routes
+- Automatic configuration of services to send mail to Mailpit
+- Automatic installation of Mailpit sendmail client and configuration into services that need it
+- A `lando mailpit` command that shows connection information
+
+## Installation
+
+```bash
+lando plugin-add @lando/mailpit
+```
+
+## Usage
+
+### 1. Configure your Landofile
+
+Add a mailpit service to your landofile.
 
 ```yaml
 services:
-  myservice:
+  mailpit:
     type: mailpit:1.22
+    mailFrom: # Defaults to appserver.
+      - appserver
+
+# Optionally proxy the Mailpit UI to a custom URL.
+proxy:
+  mailpit:
+    - myapp.lndo.site/mailpit
 ```
+
+The `mailFrom` option is an array of services that will be configured to send mail to Mailpit. By default, this will be the `appserver` service.
+
+For detailed configuration options, see our [configuration guide](./config.md).
+
+### 2. Send and View Emails
+
+Send mail from your PHP app:
+
+```php
+<?php
+$to = 'recipient@example.com';
+$subject = 'Test email from My App';
+$message = 'This is a test email sent via PHP.';
+$headers = [
+    'From: sender@example.com',
+    'Content-Type: text/plain; charset=utf-8'
+];
+
+mail($to, $subject, $message, implode("\r\n", $headers));
+```
+
+View captured emails in the Mailpit UI at the proxy URL configured above:
+- `https://myapp.lndo.site/mailpit`
+
+## Retrieving Information
+
+To retrieve connection and credential details for your Mailpit instance, use the [`lando info`](https://docs.lando.dev/cli/info.html) command.
+
+This command will display the following information:
+- SMTP server host and port
+- Pre-configured services that utilize sendmail
+- Environment variables that can be customized
 
 ## Supported versions
 
-*   **[v1.22](https://hub.docker.com/r/axllent/mailpit/)** **(default)**
-*   [custom](https://docs.lando.dev/services/lando-3.html#overrides)
-
-## Patch versions
-
-This service does not support patch versions but if you **really** need something like that you could consider using either a [custom compose service](https://docs.lando.dev/plugins/compose) or a service [overrides](https://docs.lando.dev/services/lando-3.html#overrides).
+- **[1.22](https://hub.docker.com/r/axllent/mailpit/)** **(default)**
+- [custom](https://docs.lando.dev/services/lando-3.html#overrides)
