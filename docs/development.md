@@ -5,51 +5,69 @@ description: Learn how to develop and contribute to the Lando Mailpit service
 
 # Development
 
-This guide contains information to help onboard developers to work on the [mailpit](https://github.com/axllent/mailpit) integration, hereafter referred to as *the plugin*.
+Development of this plugin happens on [GitHub](https://github.com/lando/mailpit).
 
 ## Requirements
 
 At the very least you will need to have the following installed:
 
-* [Lando 3.21.0+](https://docs.lando.dev/getting-started/installation.html) preferably installed [from source](https://docs.lando.dev/install/source.html).
+* [Lando 3.21.0+](https://docs.lando.dev/getting-started/installation.html) preferably installed [from source](https://docs.lando.dev/install/source.html)
 * [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-* [Node 18](https://nodejs.org/dist/latest-v18.x/)
+* [Node 20](https://nodejs.org/dist/latest-v20.x/)
 
-## Installation
+## Getting Started
 
-```sh
-# Clone this repo
-git clone https://github.com/lando/mailpit.git && cd mailpit
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/lando/mailpit.git
+   cd mailpit
+   ```
 
-# Install deps
-npm install
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Working
+3. Set up your development environment:
+   - Ensure you have Node.js 20 or later installed
+   - If you're using VS Code, consider installing the ESLint extension for real-time linting feedback
 
-This plugin contains various working and tested Lando apps in the [examples](https://github.com/lando/mailpit/tree/main/examples) folder. You should use these or create new ones to help with plugin development.
+## Working with the Plugin
 
-Note that each one of these examples contains the following section in its Landofile.
+This plugin contains various working and tested Lando apps in the `examples/` folder. You should use these or create new ones to help with plugin development.
+
+Each example contains the following section in its Landofile:
 
 ```yaml
 plugins:
   "@lando/mailpit": ../..
 ```
 
-This tells Lando that _this_ app should use the source version of the `@lando/mailpit` plugin you cloned down in the installation. This is useful because it allows you to isolate development within this repo without interferring with any other apps using the stable and global version of the plugin.
+This tells Lando that _this_ app should use the source version of the `@lando/mailpit` plugin you cloned down in the installation. This is useful because it allows you to isolate development within this repo without interfering with any other apps using the stable and global version of the plugin.
 
-This means that you should _almost always_ develop against apps in the `examples` folder and that those apps should _always_ contain the above `plugins` config. If you have an extant Lando application you want to develop against you can temporarily tell it to use the cloned down version of the plugin with the same line.
+You should _almost always_ develop against apps in the `examples` folder and those apps should _always_ contain the above `plugins` config. If you have an existing Lando application you want to develop against, you can temporarily tell it to use the cloned down version of the plugin with:
 
 ```yaml
 plugins:
   "@lando/mailpit": /path/to/plugin
 ```
 
-Whether you are working off an existing example or a new one you should make sure that you are updating or adding new tests as you go. See [leia testing](#leia-tests) below for more detail.
+## Repository Structure
+
+This repository is structured as follows:
+
+- `builders/`: Contains the main service builder for the Mailpit plugin
+- `config/`: Contains configuration files used in services managed by the Mailpit plugin
+- `docs/`: Documentation for the Mailpit plugin
+- `examples/`: Example configurations and usage scenarios executed by Leia for testing
+- `scripts/`: Contains scripts used by the Mailpit plugin inside apps
+- `tasks/`: Contains Lando command implementations
+- `test/`: Contains unit test files
+- `utils/`: Utility functions used by the Mailpit plugin
 
 ## Documentation
 
-If you want to help with contributing documentation here are some useful commands once you've cloned and installed the project.
+If you want to help with contributing documentation, you can use these commands:
 
 ```bash
 # launch local docs site
@@ -62,36 +80,30 @@ npm run docs:build
 npm run docs:build
 ```
 
-If you are more interested in the internals of the docs they use [VitePress](https://vitepress.dev/) and our [SPECIAL THEME](https://vitepress-theme-default-plus.lando.dev).
+The documentation uses [VitePress](https://vitepress.dev/) with our [custom theme](https://vitepress-theme-default-plus.lando.dev).
 
 ## Testing
 
-It's best to familiarize yourself with how Lando [does testing](https://docs.lando.dev/contrib/coder.html) in general before proceeding.
-
-### Unit Tests
-
-Generally, unit testable code should be placed in `utils` and then the associated test in `tests` in the form `FILE-BEING-TESTED.spec.js`. Here is an example:
-
-```bash
-./
-|-- utils
-    |-- stuff.js
-|-- test
-    |-- stuff.spec.js
-```
-
-And then you can run the tests with the below.
+This project uses both unit tests and integration tests:
 
 ```bash
 # Run unit tests
 npm run test:unit
+
+# Run integration tests
+npm run test:leia
+
+# Run all tests
+npm test
 ```
 
-### Leia Tests
+### Integration Tests with Leia
 
-We do end to end testing with our made-just-for-Lando testing framework [Leia](https://github.com/lando/leia). Leia allows us to define tests as a series of commented shell commands in human readable markdown files. Here is a simple example:
+We use [Leia](https://github.com/lando/leia) for end-to-end testing. Leia is our custom testing framework that allows us to define tests as a series of shell commands in markdown files, making our tests both executable and human-readable documentation.
 
-```md
+Each example in the `examples/` directory serves as a test case. The README.md in each example contains the test steps in this format:
+
+```markdown
 Start up tests
 --------------
 
@@ -101,8 +113,11 @@ lando start
 Verification commands
 ---------------------
 
-# Should be able to connect to all mariadb relationships
-lando mariadb main -e "show tables;"
+# Should be able to send mail
+lando php /app/mail.php
+
+# Should be able to see mail in the UI
+lando exec mailpit -- curl localhost:8025/api/v1/messages
 
 Destroy tests
 -------------
@@ -111,25 +126,28 @@ Destroy tests
 lando destroy -y
 ```
 
-Note that the headers here are important. The _Start up tests_ header specifies things that should run before the main series of tests. _Verification commands_ is the main body of tests and is required. _Destroy tests_ specifies any needed clean up commands to run.
+The headers in these files are important:
+- `Start up tests`: Commands that run before the main tests
+- `Verification commands`: The main test steps (required)
+- `Destroy tests`: Clean up commands to run after tests
 
-If you check out the various READMEs in our [examples](https://github.com/lando/mailpit/tree/main/examples) you will notice that they are all Leia tests.
-
-Before running all or some of the tests you will need to generate them.
+To run the tests:
 
 ```bash
-# Run ALL the tests, this will likely take a long time
+# Run all integration tests
 npm run test:leia
 
-# Run the tests for a single example
-npx leia examples/mariadb-10.2/README.md -c 'Destroy tests'
+# Run a specific test
+npx leia examples/basic/README.md -c 'Destroy tests'
 ```
 
-If you've created new testable examples then you will also need to let GitHub Actions know so they can run on pull requests.
+### Adding New Tests
 
-To do that you will either want to add the tests to an existing workflow that makes sense or create a new workflow. If you are creating a new workflow you should just copy an existing one and modify the filename and `name` key to something that makes sense.
+When adding new test examples:
 
-To add the new tests to the workflow just modify `jobs.leia-tests.strategy.matrix.leia-tests` with the new tests.
+1. Create a new directory in `examples/`
+2. Add a README.md with your test steps
+3. Add the test to GitHub Actions by modifying the workflow file:
 
 ```yaml
 jobs:
@@ -138,28 +156,37 @@ jobs:
       fail-fast: false
       matrix:
         leia-test:
-          - examples/2.1
-          - examples/2.2
-
+          - examples/basic
+          - examples/advanced
+          # Add your new test here
 ```
 
-Now open a pull request and the new tests should run!
+### Linting
 
-For a deeper dive on Leia you can go [here](https://github.com/lando/leia).
+This project uses ESLint for code linting. The configuration is defined in `eslint.config.js` using the new flat config format:
+
+```bash
+npm run lint
+```
 
 ## Releasing
 
-To deploy and publish a new version of the package to the `npm` registry you need only [create a release on GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository). The GitHub release will automatically [prepare the release](https://github.com/lando/prepare-release-action) and deploy it to NPM, so make sure to use the correct semantic version for the release title (ex: \`v0.8.0\`).
+To deploy and publish a new version:
 
-Also note that if you create a "pre-release" it will tag the `npm` package with `edge` instead of the default `latest` tag. Also note that while you can toggle the pre-release checkbox after the initial release creation this will not trigger a new release and/or promote the release from `edge` to `latest`. If you want to deploy to `latest` then create a new release without pre-released checked.
+1. [Create a release on GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
+2. Use semantic versioning for the release title (e.g. `v1.1.2`)
+3. The GitHub release will automatically prepare and deploy to NPM
 
-```bash
-# Will pull the most recent GitHub release
-npm install @lando/mailpit
-# Will pull the most recent GitHub pre-release
-npm install @lando/mailpit@edge
-```
+Note:
+- Creating a "pre-release" will tag the NPM package with `edge` instead of `latest`
+- To install specific versions:
+  ```bash
+  # Latest stable release
+  npm install @lando/mailpit
+  # Latest pre-release
+  npm install @lando/mailpit@edge
+  ```
 
-## Contribution
+## Contributing
 
-If you want to contribute code then just follow [this flow](https://docs.github.com/en/get-started/using-github/github-flow).
+We welcome contributions! Please follow [GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow) for contributions.
