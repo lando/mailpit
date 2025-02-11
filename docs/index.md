@@ -10,11 +10,11 @@ The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Land
 
 ## Features
 
-- ✅ A Mailpit service for receiving emails
-- ✅ Mailpit UI accessible at http and https routes
-- ✅ Automatic configuration of services to send mail to Mailpit
-- ✅ Automatic installation of Mailpit sendmail client and configuration into services that need it
-- ✅ A `lando mailpit` command that shows connection information
+- A Mailpit service for receiving emails
+- Mailpit UI accessible at http and https routes
+- Automatic configuration of services to send mail to Mailpit
+- Automatic installation of Mailpit sendmail client and configuration into services that need it
+- A `lando mailpit` command that shows connection information
 
 ## Installation
 
