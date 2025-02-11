@@ -1,43 +1,48 @@
 # Mailpit Integration Plugin for Lando
-The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Lando](https://lando.dev).
 
-This is a work in progress. PRs and feedback are appreciated!
+The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Lando](https://lando.dev). Mailpit is a modern email testing tool for developers that makes it easy to test email sending in your local development environment.
 
-## Planned Features
+## Features
 
-- [x] A Mailpit service for receiving emails.
-- [x] Mailpit UI accessible at http and https routes.
-- [x] Automatic configuration of services to send mail to Mailpit.
-- [x] Automatic installation of Mailpit sendmail client and configuration into services that need it.
-- [x] A `lando mailpit` command that shows connection information.
-- [ ] Automatic proxy configuration for the Mailpit UI.
-- [ ] A global mailpit service that multiple apps can use.
-- [ ] `lando mailpit` subcommands that interact with the mailpit service.
-- [ ] Automatic configuration of popular frameworks to send mail to Mailpit.
-- [ ] Add a mailpit service to a recipe with a single line of configuration.
+- ✅ A Mailpit service for receiving emails
+- ✅ Mailpit UI accessible at http and https routes
+- ✅ Automatic configuration of services to send mail to Mailpit
+- ✅ Automatic installation of Mailpit sendmail client and configuration into services that need it
+- ✅ A `lando mailpit` command that shows connection information
 
 ## Installation
 
-Install the Mailpit plugin:
 ```bash
 lando plugin-add @lando/mailpit
 ```
 
+## Usage
+
+### 1. Configure your Landofile
+
 Add a mailpit service to your landofile:
+
 ```yaml
-name: mysite
 services:
   mailpit:
-    type: mailpit
-    mailFrom: # Optional. The services to send mail from. Defaults to appserver.
+    type: mailpit:1.22
+    mailFrom: # Defaults to appserver.
       - appserver
 
+# Optionally proxy the Mailpit UI to a custom URL.
 proxy:
   mailpit:
-    - mailpit.mysite.lndo.site
+    - myapp.lndo.site/mailpit
 ```
 
-Send mail from your app:
+The `mailFrom` option is an array of services that will be configured to send mail to Mailpit. By default, this will be the `appserver` service.
+
+For detailed configuration options, see our [configuration documentation](docs/config.md).
+
+### 2. Send and View Emails
+
+Send mail from your PHP app:
+
 ```php
 <?php
 $to = 'recipient@example.com';
@@ -49,10 +54,10 @@ $headers = [
 ];
 
 mail($to, $subject, $message, implode("\r\n", $headers));
-
-// The email will be captured by Mailpit and viewable at:
-// http://mailpit.mysite.lndo.site
 ```
+
+View captured emails in the Mailpit UI at the proxy URL configured above:
+- http://myapp.lndo.site/mailpit
 
 ## Commands
 
@@ -63,80 +68,6 @@ Shows connection information for the Mailpit service, including:
 - Pre-configured services that use sendmail
 - Environment variables available for custom configurations
 
-## Contributing
+## Development
 
-To get started with contributing to this project, follow these steps:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/lando/mailpit.git
-   cd mailpit
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Set up your development environment:
-   - Ensure you have Node.js 20 or later installed.
-   - If you're using VS Code, consider installing the ESLint extension for real-time linting feedback.
-
-4. Run the tests to verify the current state of the project:
-   ```bash
-   npm test
-   ```
-
-Now you're ready to start developing! Check the issues page for tasks to work on, or feel free to propose new features or improvements.
-
-### Repository Structure
-
-This repository is structured as follows:
-
-- `builders/`: Contains the main service builder for the Mailpit plugin.
-- `config/`: Contains configuration files used in services managed by the Mailpit plugin.
-- `tasks/`: Contains Lando command implementations.
-- `test/`: Contains unit test files.
-- `examples/`: Example configurations and usage scenarios executed by Leia for testing.
-- `utils/`: Utility functions used by the Mailpit plugin.
-
-### Linting
-
-This project uses ESLint for code linting. The configuration is defined in `eslint.config.js` using the new flat config format. We use the Google ESLint configuration as a base and extend it with custom rules, including JSDoc validation.
-
-To run the linter, use:
-
-```bash
-npm run lint
-```
-
-### Testing
-
-This project uses Mocha for unit testing. To run the tests, follow these steps:
-
-1. Ensure you have all dependencies installed:
-   ```
-   npm install
-   ```
-
-2. Run the unit tests:
-   ```
-   npm run test:unit
-   ```
-
-The test files are located in the `test` directory. The main test files include:
-- `test/mailpit.spec.js` - Tests for the Mailpit builder
-- `test/mailpitTask.spec.js` - Tests for the mailpit command
-
-We also use [Leia](https://github.com/lando/leia) for integration testing. Leia steps through the README files in the `examples` directory,
-executes the examples as if they were a user, and validates things are rolling as they should. To run these tests:
-
-```bash
-npm run test:leia
-```
-
-To run all tests (unit and Leia):
-
-```bash
-npm test
-```
+For information about developing and contributing to this plugin, please see our [development documentation](docs/development.md).
