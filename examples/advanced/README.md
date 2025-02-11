@@ -20,8 +20,9 @@ Verification commands
 Run the following commands to validate things are rolling as they should.
 
 ```bash
-# Should have a proxy URL for the Mailpit UI
-lando info -s smtpserver --path urls | grep -q https://mailpit.lndo.site
+# Should have proxy URLs for the Mailpit UI
+lando info -s smtpserver --path urls | grep -q http://advanced.lndo.site/mailpit
+lando info -s smtpserver --path urls | grep -q https://advanced.lndo.site/mailpit
 
 # Should have root set as the meUser
 lando exec smtpserver -- id | tee >(cat 1>&2) | grep -q root
