@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+- Removed `lando mailpit` command
+
 ## v1.0.0-beta.5 - [February 12, 2025](https://github.com/lando/mailpit/releases/tag/v1.0.0-beta.5)
 
 - Updated `mailpit` default version to v1.22

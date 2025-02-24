@@ -14,7 +14,6 @@ The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Land
 - Mailpit UI accessible at http and https routes
 - Automatic configuration of services to send mail to Mailpit
 - Automatic installation of Mailpit sendmail client and configuration into services that need it
-- A `lando mailpit` command that shows connection information
 
 ## Installation
 
@@ -68,11 +67,6 @@ View captured emails in the Mailpit UI at the proxy URL configured above:
 ## Retrieving Information
 
 To retrieve connection and credential details for your Mailpit instance, use the [`lando info`](https://docs.lando.dev/cli/info.html) command.
-
-This command will display the following information:
-- SMTP server host and port
-- Pre-configured services that utilize sendmail
-- Environment variables that can be customized
 
 ## Supported versions
 
