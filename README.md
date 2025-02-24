@@ -8,7 +8,6 @@ The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Land
 - ✅ Mailpit UI accessible at http and https routes
 - ✅ Automatic configuration of services to send mail to Mailpit
 - ✅ Automatic installation of Mailpit sendmail client and configuration into services that need it
-- ✅ A `lando mailpit` command that shows connection information
 
 ## Installation
 
@@ -58,15 +57,6 @@ mail($to, $subject, $message, implode("\r\n", $headers));
 
 View captured emails in the Mailpit UI at the proxy URL configured above:
 - http://myapp.lndo.site/mailpit
-
-## Commands
-
-### `lando mailpit`
-
-Shows connection information for the Mailpit service, including:
-- SMTP server host and port
-- Pre-configured services that use sendmail
-- Environment variables available for custom configurations
 
 ## Development
 
