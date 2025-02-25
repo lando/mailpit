@@ -48,11 +48,8 @@ lando exec phpserver -- env | grep MAIL_HOST= | tee >(cat 1>&2) | grep -q MAIL_H
 lando exec phpserver -- env | grep MAIL_PORT= | tee >(cat 1>&2) | grep -q MAIL_PORT=2025
 lando exec phpserver -- cat /usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini | grep -q sendmailpit || echo 'invalid php.ini' 1>&2
 
-# Should have the mailpit binary in the helpers directory
-lando exec phpserver -- ls -l /helpers/mailpit
-
 # Should be able to send messages to the SMTP server
-lando exec phpserver -- mailpit-test.php
+lando exec phpserver -- ./mailpit-test.php
 
 # Should be able to retrieve messages from the SMTP server
 lando exec phpserver -- wget sendmailpit/api/v1/messages -qO - | grep -q recipient@example.com
