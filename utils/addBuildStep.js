@@ -1,7 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
-
 /**
  * Adds build steps to a service
  * @param {string|string[]} steps - The build step(s) to add
@@ -19,7 +17,26 @@ module.exports = (steps, app, name, step = 'build_internal', front = false) => {
     throw new Error(`Invalid build step type: ${step}`);
   }
 
-  const current = _.get(app, `config.services.${name}.${step}`, []);
-  const add = (front) ? _.flatten([steps, current]) : _.flatten([current, steps]);
-  _.set(app, `config.services.${name}.${step}`, _.uniq(add));
+  // Get current steps or empty array if none exist
+  const current = app.config.services?.[name]?.[step] || [];
+
+  // Convert steps to array if it's a string
+  const stepsArray = Array.isArray(steps) ? steps : [steps];
+
+  // Combine arrays based on front parameter
+  const combined = front ? [...stepsArray, ...current] : [...current, ...stepsArray];
+
+  // Remove duplicates
+  const uniqueSteps = [...new Set(combined)];
+
+  // Ensure the path exists and set the value
+  if (!app.config.services) {
+    app.config.services = {};
+  }
+
+  if (!app.config.services[name]) {
+    app.config.services[name] = {};
+  }
+
+  app.config.services[name][step] = uniqueSteps;
 };
