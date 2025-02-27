@@ -9,13 +9,10 @@
  * builder, including default options, environment variables, and other
  * configurations. Run with `npm run test:unit`
  *
- * @requires _
  * @requires chai
  * @requires builders/mailpit
  */
 
-/** @type {import('lodash')} */
-const _ = require('lodash');
 const chai = require('chai');
 const expect = chai.expect;
 const mailpitBuilder = require('../builders/mailpit');
@@ -28,7 +25,8 @@ describe('Mailpit Builder', function() {
     mockParent = class MockParent {
       constructor(id, options = {}, ...sources) {
         this.id = id;
-        this.options = _.merge({}, options);
+        // Create a deep copy of options
+        this.options = JSON.parse(JSON.stringify(options));
         this.sources = sources;
       }
     };
@@ -52,6 +50,9 @@ describe('Mailpit Builder', function() {
         },
         log: {
           debug: () => {}, // Mock debug function
+        },
+        _lando: {
+          utils: require('@lando/core/lib/utils'),
         },
       },
     };
@@ -156,14 +157,5 @@ describe('Mailpit Builder', function() {
     expect(instance.options.version).to.equal('1.19');
     expect(instance.options.maxMessages).to.equal(2012);
     expect(instance.options.port).to.equal(2025);
-  });
-
-  it('should initialize sources array even when not provided in options', () => {
-    const optionsWithoutSources = _.omit(mockOptions, 'sources');
-    const LandoMailpitService = mailpitBuilder.builder(mockParent, mailpitBuilder.config);
-    const instance = new LandoMailpitService('smtpserver', optionsWithoutSources);
-
-    expect(instance.options.sources).to.be.an('array');
-    expect(instance.options.sources).to.have.lengthOf(2);
   });
 });

@@ -6,7 +6,6 @@
  * This module exports a configuration object for the Mailpit service in Lando.
  */
 
-const _ = require('lodash');
 const path = require('path');
 const addBuildStep = require('../utils/addBuildStep');
 const setConfigOptions = require('../utils/setConfigOptions');
@@ -93,7 +92,9 @@ module.exports = {
         const debug = userConfig._app.log.debug;
 
         // Merge the user config onto the default config
-        const options = _.merge({}, defaultConfig, userConfig);
+        /** @type {import('@lando/core/lib/utils').merge} */
+        const merge = userConfig._app._lando.utils.merge;
+        const options = merge(defaultConfig, userConfig);
 
         /**
          * Mailpit service configuration
@@ -152,29 +153,46 @@ module.exports = {
           } else if (service === options.name) {
             debug(`Skipping mail configuration for ${service} as it is the mailpit service itself.`);
           }
-          return exists;
+          return exists && service !== options.name;
         });
+
+        // Create sources for mail configuration
+        const sources = [];
 
         validServices.forEach(service => {
           debug(`Configuring mail settings for ${service}`);
-          options.sources.push({
-            services: _.set({}, service, {
-              environment: {
-                MAIL_HOST: options.name,
-                MAIL_PORT: options.port,
-              },
-              volumes: [
-                `${options.confDest}/php.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini`,
-              ],
-            }),
-          });
+          const serviceConfig = {
+            services: {},
+          };
+
+          serviceConfig.services[service] = {
+            environment: {
+              MAIL_HOST: options.name,
+              MAIL_PORT: options.port,
+            },
+            volumes: [
+              `${options.confDest}/php.ini:/usr/local/etc/php/conf.d/zzzz-lando-mailpit.ini`,
+            ],
+          };
+
+          sources.push(serviceConfig);
         });
 
         // Add the Mailpit service to the sources
-        options.sources.push({services: _.set({}, options.name, mailpit)});
+        const mailpitServiceConfig = {
+          services: {},
+        };
+        mailpitServiceConfig.services[options.name] = mailpit;
+        sources.push(mailpitServiceConfig);
 
-        // Call the parent constructor with the processed options
-        super(id, options, ..._.flatten(options.sources));
+        // Combine existing sources with new sources
+        options.sources = [...options.sources, ...sources];
+
+        // Flatten the sources array if needed
+        const flattenedSources = sources.flat();
+
+        // Call the parent constructor with the processed options and flattened sources
+        super(id, options, ...flattenedSources);
       }
     },
 };
