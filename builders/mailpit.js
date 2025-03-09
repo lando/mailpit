@@ -7,8 +7,8 @@
  */
 
 const path = require('path');
-const addBuildStep = require('../utils/addBuildStep');
-const setConfigOptions = require('../utils/setConfigOptions');
+const addBuildStep = require('../utils/add-build-step');
+const setConfigOptions = require('../utils/set-config-options');
 
 /**
  * @typedef {import('@lando/core/builders/_service')} LandoService
@@ -31,8 +31,8 @@ const setConfigOptions = require('../utils/setConfigOptions');
  * @type {MailpitConfig}
  */
 const defaultConfig = {
-  version: '1.22',
-  supported: ['1.22'],
+  version: '1.23',
+  supported: ['1.22', '1.23'],
   mailFrom: ['appserver'],
   maxMessages: 500,
   port: 1025,
