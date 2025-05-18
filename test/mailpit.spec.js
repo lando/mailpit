@@ -13,6 +13,8 @@
  * @requires builders/mailpit
  */
 
+const DEFAULT_MAILPIT_VERSION = '1.25';
+
 const chai = require('chai');
 const expect = chai.expect;
 const mailpitBuilder = require('../builders/mailpit');
@@ -76,7 +78,7 @@ describe('Mailpit Builder', function() {
     );
     const instance = new LandoMailpitService('smtpserver', mockOptions);
 
-    expect(instance.options.version).to.equal('1.22'); // Adjusted to match the correct default version
+    expect(instance.options.version).to.equal(DEFAULT_MAILPIT_VERSION); // Adjusted to match the correct default version
     expect(instance.options.maxMessages).to.equal(500);
   });
 
@@ -103,7 +105,7 @@ describe('Mailpit Builder', function() {
     expect(instance.sources[1]).to.have.nested.property('services.smtpserver');
 
     const mailpitService = instance.sources[1].services.smtpserver;
-    expect(mailpitService.image).to.equal('axllent/mailpit:v1.22'); // Adjusted to match the correct default version
+    expect(mailpitService.image).to.equal(`axllent/mailpit:v${DEFAULT_MAILPIT_VERSION}`); // Adjusted to match the correct default version
     expect(mailpitService.command).to.equal('/mailpit');
     expect(mailpitService.environment).to.deep.include({
       TERM: 'xterm',

@@ -2,7 +2,6 @@
 
 /**
  * Adds build steps to a service
- * 
  * @param {string|string[]} steps - The build step(s) to add
  * @param {object} app - The Lando app object
  * @param {string} name - The name of the service
