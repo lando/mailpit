@@ -7,7 +7,7 @@
 
 const chai = require('chai');
 const expect = chai.expect;
-const setConfigOptions = require('../utils/setConfigOptions');
+const setConfigOptions = require('../utils/set-config-options');
 
 describe('setConfigOptions Utility', () => {
   let mockApp;

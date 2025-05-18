@@ -2,7 +2,7 @@
 
 const chai = require('chai');
 const expect = chai.expect;
-const addBuildStep = require('../utils/addBuildStep');
+const addBuildStep = require('../utils/add-build-step');
 
 describe('addBuildStep Utility', () => {
   let mockApp;
