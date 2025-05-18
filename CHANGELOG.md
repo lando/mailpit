@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v1.0.0 - [May 18, 2025](https://github.com/lando/mailpit/releases/tag/v1.0.0)
+
 - Added support for `mailpit` v1.23 - v1.25
 - Updated `mailpit` default version to v1.25
 
