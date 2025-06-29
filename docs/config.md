@@ -12,7 +12,7 @@ Also note that options, in addition to the [build steps](https://docs.lando.dev/
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     mailFrom:
       - appserver
     maxMessages: 500
@@ -37,7 +37,7 @@ Example configuration with explicit mail service setup:
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     mailFrom:
       - phpapp
   phpapp:
@@ -51,7 +51,7 @@ The maximum number of messages to store before truncating. Must be at least 1.
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     maxMessages: 1000  # Store up to 1000 messages
 ```
 
@@ -62,7 +62,7 @@ The SMTP port to use for sending mail to Mailpit. Must be between 1 and 65535.
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     port: 2525  # Use custom SMTP port
 ```
 
@@ -75,6 +75,6 @@ This option is inherited from the `lando` base service. It allows external acces
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     portforward: true
 ```
