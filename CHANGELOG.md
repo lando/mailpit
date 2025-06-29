@@ -3,6 +3,8 @@
 - Added support for `mailpit` v1.25 - v1.27
 - Updated `mailpit` default version to v1.27
 - Added automated GitHub Actions workflow for daily version updates
+- Updated axios from 1.7.9 to 1.9.0
+- Updated vite from 5.4.14 to 5.4.19
 
 ## v1.0.0 - [May 18, 2025](https://github.com/lando/mailpit/releases/tag/v1.0.0)
 
