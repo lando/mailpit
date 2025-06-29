@@ -24,7 +24,7 @@ Add a mailpit service to your landofile:
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.25
+    type: mailpit:1.27
     mailFrom: # Defaults to appserver.
       - appserver
 

@@ -13,7 +13,7 @@
  * @requires builders/mailpit
  */
 
-const DEFAULT_MAILPIT_VERSION = '1.25';
+const DEFAULT_MAILPIT_VERSION = '1.27';
 
 const chai = require('chai');
 const expect = chai.expect;
