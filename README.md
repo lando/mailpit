@@ -23,14 +23,14 @@ Add a mailpit service to your landofile:
 
 ```yaml
 services:
-  mailpit:
-    type: mailpit:1.27
+  mailpit:1.27.0
+    type: mailpit:1.27.01.27
     mailFrom: # Defaults to appserver.
       - appserver
 
 # Optionally proxy the Mailpit UI to a custom URL.
 proxy:
-  mailpit:
+  mailpit:1.27.0
     - myapp.lndo.site/mailpit
 ```
 
