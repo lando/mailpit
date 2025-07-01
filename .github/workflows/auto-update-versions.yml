@@ -2,8 +2,8 @@ name: Auto-update Mailpit versions
 
 on:
   schedule:
-    # Run daily at 6 AM UTC
-    - cron: '0 6 * * *'
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -24,101 +24,190 @@ jobs:
         id: check-versions
         run: |
           # Get latest versions from Docker Hub
-          LATEST_VERSIONS=$(curl -s "https://registry.hub.docker.com/v2/repositories/axllent/mailpit/tags/?page_size=50" | \
+          echo "Fetching Mailpit versions from Docker Hub..."
+
+          # Get versions (1.25, 1.26, 1.27, etc.)
+          AVAILABLE_VERSIONS=$(curl -s "https://registry.hub.docker.com/v2/repositories/axllent/mailpit/tags/?page_size=100" | \
             jq -r '.results[].name' | \
             grep -E '^v[0-9]+\.[0-9]+(\.[0-9]+)?$' | \
             sed 's/^v//' | \
-            sort -V | \
-            tail -10)
-          
+            sort -V)
+
           echo "Available versions:"
-          echo "$LATEST_VERSIONS"
-          
+          echo "$AVAILABLE_VERSIONS"
+
           # Get the latest version
-          LATEST_VERSION=$(echo "$LATEST_VERSIONS" | tail -1)
+          LATEST_VERSION=$(echo "$AVAILABLE_VERSIONS" | tail -1)
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          
-          # Get current version from plugin
-          CURRENT_VERSION=$(grep -o "version: '[^']*'" builders/mailpit.js | cut -d"'" -f2)
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          
-          # Check if update is needed
-          if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+
+          # Get current default version from plugin
+          CURRENT_DEFAULT=$(grep -o "version: '[^']*'" builders/mailpit.js | cut -d"'" -f2)
+          echo "current_default=$CURRENT_DEFAULT" >> $GITHUB_OUTPUT
+
+          # Get current supported versions
+          CURRENT_SUPPORTED=$(awk '/supported: \[/,/\]/' builders/mailpit.js | grep -o "'[0-9.]*'" | tr -d "'" | tr '\n' ',' | sed 's/,$//')
+          echo "current_supported=$CURRENT_SUPPORTED" >> $GITHUB_OUTPUT
+
+          # Get current highest supported version (first in supported array)
+          CURRENT_HIGHEST=$(echo "$CURRENT_SUPPORTED" | cut -d',' -f1)
+          echo "current_highest=$CURRENT_HIGHEST" >> $GITHUB_OUTPUT
+
+          # Check if update is needed (new version available)
+          if [ "$LATEST_VERSION" != "$CURRENT_HIGHEST" ]; then
             echo "needs_update=true" >> $GITHUB_OUTPUT
-            echo "Update needed: $CURRENT_VERSION -> $LATEST_VERSION"
+            echo "Update needed:"
+            echo "  Current highest supported: $CURRENT_HIGHEST -> $LATEST_VERSION"
+            echo "  Current default: $CURRENT_DEFAULT"
           else
             echo "needs_update=false" >> $GITHUB_OUTPUT
-            echo "No update needed. Current version $CURRENT_VERSION is latest."
+            echo "No update needed. Current highest supported version $CURRENT_HIGHEST is latest."
           fi
-          
-          # Get the 3 most recent versions for supported list
-          SUPPORTED_VERSIONS=$(echo "$LATEST_VERSIONS" | tail -3 | tac | tr '\n' ',' | sed 's/,$//')
-          echo "supported_versions=$SUPPORTED_VERSIONS" >> $GITHUB_OUTPUT
 
       - name: Update plugin files
         if: steps.check-versions.outputs.needs_update == 'true'
         run: |
           LATEST_VERSION="${{ steps.check-versions.outputs.latest_version }}"
-          SUPPORTED_VERSIONS="${{ steps.check-versions.outputs.supported_versions }}"
-          
+          CURRENT_DEFAULT="${{ steps.check-versions.outputs.current_default }}"
+          CURRENT_HIGHEST="${{ steps.check-versions.outputs.current_highest }}"
+          CURRENT_SUPPORTED="${{ steps.check-versions.outputs.current_supported }}"
+
           echo "Updating to version: $LATEST_VERSION"
-          echo "Supported versions: $SUPPORTED_VERSIONS"
-          
-          # Update builders/mailpit.js
+          echo "Current default: $CURRENT_DEFAULT"
+          echo "Current highest supported: $CURRENT_HIGHEST"
+          echo "Current supported: $CURRENT_SUPPORTED"
+
+          # Update builders/mailpit.js with latest 4 versions
           node -e "
             const fs = require('fs');
             const path = 'builders/mailpit.js';
             let content = fs.readFileSync(path, 'utf8');
-            
-            // Update default version
+
+            // Update default version to latest
             content = content.replace(
               /version: '[^']*'/,
               \"version: '$LATEST_VERSION'\"
             );
-            
+
+            // Parse current versions and get latest 4
+            const currentSupported = '$CURRENT_SUPPORTED'.split(',').filter(v => v);
+            const latestVersion = '$LATEST_VERSION';
+
+            // Create new supported list with latest 4 versions
+            let allVersions = [...currentSupported];
+            if (!allVersions.includes(latestVersion)) {
+              allVersions.push(latestVersion);
+            }
+
+            // Sort all versions (newest first) and take latest 4
+            allVersions.sort((a, b) => {
+              const aParts = a.split('.').map(Number);
+              const bParts = b.split('.').map(Number);
+              for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                const aVal = aParts[i] || 0;
+                const bVal = bParts[i] || 0;
+                if (aVal !== bVal) return bVal - aVal;
+              }
+              return 0;
+            });
+
+            const newSupported = allVersions.slice(0, 4);
+
             // Update supported versions array
-            const supportedArray = '$SUPPORTED_VERSIONS'.split(',').map(v => \"'\" + v + \"'\").join(', ');
+            const supportedArray = newSupported.map(v => '    \\'' + v + '\\',').join('\\n');
             content = content.replace(
-              /supported: \[[^\]]*\]/,
-              \"supported: [\" + supportedArray + \"]\"
+              /supported: \\[\\s*[\\s\\S]*?\\s*\\]/,
+              'supported: [\\n' + supportedArray + '\\n  ]'
             );
-            
+
             fs.writeFileSync(path, content);
             console.log('Updated builders/mailpit.js');
+            console.log('New supported versions:', newSupported.join(', '));
           "
-          
-          # Update examples - only replace the current default version
-          find examples -name "*.yml" -exec sed -i "s/mailpit:$CURRENT_VERSION/mailpit:$LATEST_VERSION/g" {} \;
-          echo "Updated examples"
-          
-          # Update README.md - only replace the current default version
-          sed -i "s/mailpit:$CURRENT_VERSION/mailpit:$LATEST_VERSION/g" README.md
+
+          # Update examples - only replace exact matches of the current highest supported version (mailpit:X.Y format)
+          # This preserves specific patch version examples while updating the default/latest references
+          find examples -name "*.yml" -exec sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" {} \;
+          echo "Updated examples (replaced mailpit:$CURRENT_HIGHEST with mailpit:$LATEST_VERSION)"
+
+          # Update README.md - only replace exact matches of the current highest supported version
+          sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" README.md
           echo "Updated README.md"
-          
-          # Update docs - only replace the current default version
-          find docs -name "*.md" -exec sed -i "s/mailpit:$CURRENT_VERSION/mailpit:$LATEST_VERSION/g" {} \;
+
+          # Update docs - only replace exact matches of the current highest supported version
+          find docs -name "*.md" -exec sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" {} \;
           echo "Updated docs"
-          
+
+          # Update CHANGELOG.md with new entry
+          node -e "
+            const fs = require('fs');
+            const path = 'CHANGELOG.md';
+            let content = fs.readFileSync(path, 'utf8');
+
+            const latestVersion = '$LATEST_VERSION';
+            const currentDefault = '$CURRENT_DEFAULT';
+
+            // Create changelog entries
+            const supportEntry = '* Added Mailpit v' + latestVersion + ' support.';
+            const defaultEntry = '* Set default Mailpit version to v' + latestVersion + '.';
+
+            // Check if these entries already exist
+            if (content.includes(supportEntry) && content.includes(defaultEntry)) {
+              console.log('Changelog entries already exist');
+            } else {
+              // Find the unreleased header and insert after the blank line
+              const unreleasedHeaderRegex = /(## {{ UNRELEASED_VERSION }}[^\\n]*\\n\\n)/;
+              const match = content.match(unreleasedHeaderRegex);
+
+              if (match) {
+                const headerWithBlankLine = match[1];
+                const restOfContent = content.substring(match.index + headerWithBlankLine.length);
+
+                // Insert both entries right after the header and blank line
+                const newEntries = supportEntry + '\\n' + defaultEntry + '\\n';
+                const updatedContent = headerWithBlankLine + newEntries + restOfContent;
+
+                fs.writeFileSync(path, updatedContent);
+                console.log('Added changelog entries:', supportEntry, defaultEntry);
+              } else {
+                console.log('Could not find unreleased header in CHANGELOG.md');
+              }
+            }
+          "
+          echo "Updated CHANGELOG.md"
+
           # Update supported versions list in docs/index.md
           node -e "
             const fs = require('fs');
             const path = 'docs/index.md';
             let content = fs.readFileSync(path, 'utf8');
-            
-            const versions = '$SUPPORTED_VERSIONS'.split(',');
-            const versionList = versions.map((v, i) => {
-              const isDefault = i === 0 ? ' **(default)**' : '';
-              return \"- \" + (i === 0 ? '**' : '') + \"[\" + v + \"](https://hub.docker.com/r/axllent/mailpit/)\" + (i === 0 ? '**' : '') + isDefault;
-            }).join('\n');
-            
-            // Replace the supported versions section
-            content = content.replace(
-              /- \*\*\[[\d.]+\]\(https:\/\/hub\.docker\.com\/r\/axllent\/mailpit\/\)\*\* \*\*\(default\)\*\*\n(?:- \[[\d.]+\]\(https:\/\/hub\.docker\.com\/r\/axllent\/mailpit\/\)\n?)*/,
-              versionList + '\n'
-            );
-            
-            fs.writeFileSync(path, content);
-            console.log('Updated supported versions in docs/index.md');
+
+            // Get the updated supported versions from the plugin file
+            const pluginContent = fs.readFileSync('builders/mailpit.js', 'utf8');
+            const supportedMatch = pluginContent.match(/supported: \[\s*([\s\S]*?)\s*\]/);
+            if (supportedMatch) {
+              const supportedVersions = supportedMatch[1]
+                .split(',')
+                .map(line => line.trim().replace(/[',]/g, ''))
+                .filter(v => v);
+
+              const versionList = supportedVersions.map((v, i) => {
+                // The default version is the one specified in the config, not necessarily the first in supported array
+                const isDefault = v === '$LATEST_VERSION' ? ' **(default)**' : '';
+                return \"- \" + (v === '$LATEST_VERSION' ? '**' : '') + \"[\" + v + \"](https://hub.docker.com/r/axllent/mailpit/)\" + (v === '$LATEST_VERSION' ? '**' : '') + isDefault;
+              }).join('\n');
+
+              // Replace the supported versions section if it exists
+              const supportedSectionRegex = /## Supported versions[\s\S]*?(?=\n## |\n# |$)/;
+              if (content.match(supportedSectionRegex)) {
+                content = content.replace(
+                  supportedSectionRegex,
+                  '## Supported versions\n\n' + versionList + '\n- [custom](https://docs.lando.dev/services/lando-3.html#overrides)\n\n'
+                );
+              }
+
+              fs.writeFileSync(path, content);
+              console.log('Updated supported versions in docs/index.md');
+            }
           "
 
       - name: Create Pull Request
@@ -127,29 +216,25 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
-            Update Mailpit to v${{ steps.check-versions.outputs.latest_version }}
-            
-            - Updated default version from ${{ steps.check-versions.outputs.current_version }} to ${{ steps.check-versions.outputs.latest_version }}
-            - Updated supported versions to latest 3 releases
-            - Updated all examples and documentation
-          title: "Update Mailpit to v${{ steps.check-versions.outputs.latest_version }}"
+            Updated Mailpit to v${{ steps.check-versions.outputs.latest_version }}
+
+            - Updated default version from ${{ steps.check-versions.outputs.current_default }} to ${{ steps.check-versions.outputs.latest_version }}
+            - Updated supported versions to latest 4 releases
+            - Updated examples and documentation (only highest supported version references)
+          title: "Updated Mailpit to v${{ steps.check-versions.outputs.latest_version }}"
           body: |
             ## Summary
             - Updates Mailpit plugin to use the latest version v${{ steps.check-versions.outputs.latest_version }}
-            - Updates supported versions list to include the 3 most recent releases
-            - Updates all examples and documentation to reflect the new default version
-            
+            - Updates supported versions list to include the 4 most recent releases
+            - Updates examples and documentation (only replaces highest supported version references)
+
             ## Changes
-            - **Plugin**: Updated default version and supported versions in `builders/mailpit.js`
-            - **Examples**: Updated version references in all example `.lando.yml` files
+            - **Plugin**: Updated default version in `builders/mailpit.js` to v${{ steps.check-versions.outputs.latest_version }}
+            - **Plugin**: Updated supported versions to latest 4 releases
+            - **Examples**: Updated `mailpit:${{ steps.check-versions.outputs.current_highest }}` → `mailpit:${{ steps.check-versions.outputs.latest_version }}` (preserves specific version examples)
             - **Documentation**: Updated version references in README.md and docs/
-            
-            ## Test plan
-            - [ ] Verify plugin loads with new version
-            - [ ] Test basic example works with new default version
-            - [ ] Test advanced example works with explicit version
-            - [ ] Verify documentation renders correctly
-            
+            - **Changelog**: Added entry documenting the version update
+
             ---
             *This PR was automatically generated by GitHub Actions*
           branch: auto-update-mailpit-v${{ steps.check-versions.outputs.latest_version }}
