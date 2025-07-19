@@ -3,7 +3,7 @@
   "description": "A Mailpit integration plugin for Lando.",
   "version": "1.0.1",
   "author": "Aaron Feledy @AaronFeledy",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "bugs": "https://github.com/lando/mailpit/issues/new",
   "homepage": "https://github.com/lando/mailpit",
   "keywords": [
