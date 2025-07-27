@@ -31,8 +31,13 @@ const setConfigOptions = require('../utils/set-config-options');
  * @type {MailpitConfig}
  */
 const defaultConfig = {
-  version: '1.27',
-  supported: ['1.25', '1.26', '1.27'],
+  version: '1.27.2',
+  supported: [
+    '1.27.2',
+    '1.27',
+    '1.26',
+    '1.25',
+  ],
   mailFrom: ['appserver'],
   maxMessages: 500,
   port: 1025,
