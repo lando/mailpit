@@ -9,7 +9,7 @@ services:
     type: php:8.2
 
   smtpserver:
-    type: mailpit:1.25
+    type: mailpit:1.27.7
     maxMessages: 54321
     port: 2025
     mailFrom:
