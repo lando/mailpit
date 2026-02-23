@@ -15,17 +15,17 @@ jobs:
     steps:
       # Install deps and cache
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Restore cached docs builds
         id: cache-docs-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           key: lando-mvb-docs
           path: docs/.vitepress/cache/@lando/mvb
 
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -44,7 +44,7 @@ jobs:
       - name: Cache the docs builds
         id: cache-docs-save
         if: always() && steps.cache-docs-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           key: ${{ steps.cache-docs-restore.outputs.cache-primary-key }}
           path: docs/.vitepress/cache/@lando/mvb
