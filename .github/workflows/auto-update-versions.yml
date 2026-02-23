@@ -23,10 +23,9 @@ jobs:
       - name: Check for new Mailpit versions
         id: check-versions
         run: |
-          # Get latest versions from Docker Hub
+          # Get latest minor versions from Docker Hub (no patch versions)
           echo "Fetching Mailpit versions from Docker Hub..."
 
-          # Get versions (1.25, 1.26, 1.27, etc.)
           AVAILABLE_VERSIONS=$(curl -s "https://registry.hub.docker.com/v2/repositories/axllent/mailpit/tags/?page_size=100" | \
             jq -r '.results[].name' | \
             grep -E '^v[0-9]+\.[0-9]+$' | \
@@ -72,102 +71,117 @@ jobs:
           CURRENT_SUPPORTED="${{ steps.check-versions.outputs.current_supported }}"
 
           echo "Updating to version: $LATEST_VERSION"
-          echo "Current default: $CURRENT_DEFAULT"
-          echo "Current highest supported: $CURRENT_HIGHEST"
-          echo "Current supported: $CURRENT_SUPPORTED"
 
-          # Update builders/mailpit.js with latest 4 versions
+          # Update builders/mailpit.js — keep 6 in supported, overflow to legacy
           node -e "
             const fs = require('fs');
-            const path = 'builders/mailpit.js';
-            let content = fs.readFileSync(path, 'utf8');
+            const filePath = 'builders/mailpit.js';
+            let content = fs.readFileSync(filePath, 'utf8');
 
-            // Update default version to latest
-            content = content.replace(
-              /version: '[^']*'/,
-              \"version: '$LATEST_VERSION'\"
-            );
-
-            // Parse current versions and get latest 4
-            const currentSupported = '$CURRENT_SUPPORTED'.split(',').filter(v => v);
+            const MAX_SUPPORTED = 6;
             const latestVersion = '$LATEST_VERSION';
 
-            // Create new supported list with latest 4 versions
-            let allVersions = [...currentSupported];
-            if (!allVersions.includes(latestVersion)) {
-              allVersions.push(latestVersion);
+            // Parse current supported versions
+            const currentSupported = '$CURRENT_SUPPORTED'.split(',').filter(v => v);
+
+            // Parse current legacy versions
+            const legacyMatch = content.match(/legacy: \[\s*([\s\S]*?)\s*\]/);
+            const currentLegacy = legacyMatch
+              ? legacyMatch[1].split(',').map(l => l.trim().replace(/['\s]/g, '')).filter(v => v)
+              : [];
+
+            // Build new supported list
+            let allSupported = [...currentSupported];
+            if (!allSupported.includes(latestVersion)) {
+              allSupported.push(latestVersion);
             }
 
-            // Sort all versions (newest first) and take latest 4
-            allVersions.sort((a, b) => {
-              const aParts = a.split('.').map(Number);
-              const bParts = b.split('.').map(Number);
-              for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-                const aVal = aParts[i] || 0;
-                const bVal = bParts[i] || 0;
-                if (aVal !== bVal) return bVal - aVal;
+            // Sort newest first
+            const sortDesc = (a, b) => {
+              const ap = a.split('.').map(Number);
+              const bp = b.split('.').map(Number);
+              for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+                if ((bp[i] || 0) !== (ap[i] || 0)) return (bp[i] || 0) - (ap[i] || 0);
               }
               return 0;
-            });
+            };
+            allSupported.sort(sortDesc);
 
-            const newSupported = allVersions.slice(0, 4);
+            // Overflow oldest supported into legacy
+            const newSupported = allSupported.slice(0, MAX_SUPPORTED);
+            const demoted = allSupported.slice(MAX_SUPPORTED);
+            const newLegacy = [...new Set([...demoted, ...currentLegacy])].sort(sortDesc);
 
-            // Update supported versions array
-            const supportedArray = newSupported.map(v => '    \\'' + v + '\\',').join('\\n');
+            // Update default version
             content = content.replace(
-              /supported: \\[\\s*[\\s\\S]*?\\s*\\]/,
-              'supported: [\\n' + supportedArray + '\\n  ]'
+              /version: '[^']*'/,
+              \"version: '\" + latestVersion + \"'\"
             );
 
-            fs.writeFileSync(path, content);
-            console.log('Updated builders/mailpit.js');
-            console.log('New supported versions:', newSupported.join(', '));
+            // Update supported array
+            const supportedStr = newSupported.map(v => \"    '\" + v + \"',\").join('\n');
+            content = content.replace(
+              /supported: \[\s*[\s\S]*?\s*\]/,
+              'supported: [\n' + supportedStr + '\n  ]'
+            );
+
+            // Update or insert legacy array
+            if (newLegacy.length > 0) {
+              const legacyStr = newLegacy.map(v => \"    '\" + v + \"',\").join('\n');
+              if (legacyMatch) {
+                content = content.replace(
+                  /legacy: \[\s*[\s\S]*?\s*\]/,
+                  'legacy: [\n' + legacyStr + '\n  ]'
+                );
+              } else {
+                // Insert legacy right after supported array closing bracket
+                content = content.replace(
+                  /(supported: \[[\s\S]*?\]),/,
+                  '\$1,\n  legacy: [\n' + legacyStr + '\n  ],'
+                );
+              }
+            }
+
+            fs.writeFileSync(filePath, content);
+            console.log('Supported:', newSupported.join(', '));
+            console.log('Legacy:', newLegacy.join(', ') || 'none');
           "
 
-          # Update examples - only replace exact matches of the current highest supported version (mailpit:X.Y format)
-          # This preserves specific patch version examples while updating the default/latest references
+          # Update examples
           find examples -name "*.yml" -exec sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" {} \;
-          echo "Updated examples (replaced mailpit:$CURRENT_HIGHEST with mailpit:$LATEST_VERSION)"
+          echo "Updated examples"
 
-          # Update README.md - only replace exact matches of the current highest supported version
+          # Update README.md
           sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" README.md
           echo "Updated README.md"
 
-          # Update docs - only replace exact matches of the current highest supported version
+          # Update docs version references
           find docs -name "*.md" -exec sed -i "s/mailpit:$CURRENT_HIGHEST\([^0-9.]\|$\)/mailpit:$LATEST_VERSION\1/g" {} \;
           echo "Updated docs"
 
-          # Update CHANGELOG.md with new entry
+          # Update CHANGELOG.md
           node -e "
             const fs = require('fs');
-            const path = 'CHANGELOG.md';
-            let content = fs.readFileSync(path, 'utf8');
+            const filePath = 'CHANGELOG.md';
+            let content = fs.readFileSync(filePath, 'utf8');
 
             const latestVersion = '$LATEST_VERSION';
-            const currentDefault = '$CURRENT_DEFAULT';
 
-            // Create changelog entries
-            const supportEntry = '* Added Mailpit v' + latestVersion + ' support.';
-            const defaultEntry = '* Set default Mailpit version to v' + latestVersion + '.';
+            const supportEntry = '- Added Mailpit v' + latestVersion + ' support.';
+            const defaultEntry = '- Set default Mailpit version to v' + latestVersion + '.';
 
-            // Check if these entries already exist
             if (content.includes(supportEntry) && content.includes(defaultEntry)) {
               console.log('Changelog entries already exist');
             } else {
-              // Find the unreleased header and insert after the blank line
-              const unreleasedHeaderRegex = /(## {{ UNRELEASED_VERSION }}[^\\n]*\\n\\n)/;
+              const unreleasedHeaderRegex = /(## {{ UNRELEASED_VERSION }}[^\n]*\n\n)/;
               const match = content.match(unreleasedHeaderRegex);
 
               if (match) {
-                const headerWithBlankLine = match[1];
-                const restOfContent = content.substring(match.index + headerWithBlankLine.length);
-
-                // Insert both entries right after the header and blank line
-                const newEntries = supportEntry + '\\n' + defaultEntry + '\\n';
-                const updatedContent = headerWithBlankLine + newEntries + restOfContent;
-
-                fs.writeFileSync(path, updatedContent);
-                console.log('Added changelog entries:', supportEntry, defaultEntry);
+                const header = match[1];
+                const rest = content.substring(match.index + header.length);
+                const newEntries = supportEntry + '\n' + defaultEntry + '\n';
+                fs.writeFileSync(filePath, header + newEntries + rest);
+                console.log('Added changelog entries');
               } else {
                 console.log('Could not find unreleased header in CHANGELOG.md');
               }
@@ -178,37 +192,53 @@ jobs:
           # Update supported versions list in docs/index.md
           node -e "
             const fs = require('fs');
-            const path = 'docs/index.md';
-            let content = fs.readFileSync(path, 'utf8');
+            const filePath = 'docs/index.md';
+            let content = fs.readFileSync(filePath, 'utf8');
 
-            // Get the updated supported versions from the plugin file
             const pluginContent = fs.readFileSync('builders/mailpit.js', 'utf8');
+            const latestVersion = '$LATEST_VERSION';
+
+            // Get supported versions
             const supportedMatch = pluginContent.match(/supported: \[\s*([\s\S]*?)\s*\]/);
-            if (supportedMatch) {
-              const supportedVersions = supportedMatch[1]
-                .split(',')
-                .map(line => line.trim().replace(/[',]/g, ''))
-                .filter(v => v);
+            const supported = supportedMatch
+              ? supportedMatch[1].split(',').map(l => l.trim().replace(/['\s]/g, '')).filter(v => v)
+              : [];
 
-              const versionList = supportedVersions.map((v, i) => {
-                // The default version is the one specified in the config, not necessarily the first in supported array
-                const isDefault = v === '$LATEST_VERSION' ? ' **(default)**' : '';
-                return \"- \" + (v === '$LATEST_VERSION' ? '**' : '') + \"[\" + v + \"](https://hub.docker.com/r/axllent/mailpit/)\" + (v === '$LATEST_VERSION' ? '**' : '') + isDefault;
-              }).join('\n');
+            // Get legacy versions
+            const legacyMatch = pluginContent.match(/legacy: \[\s*([\s\S]*?)\s*\]/);
+            const legacy = legacyMatch
+              ? legacyMatch[1].split(',').map(l => l.trim().replace(/['\s]/g, '')).filter(v => v)
+              : [];
 
-              // Replace the supported versions section if it exists
-              const supportedSectionRegex = /## Supported versions[\s\S]*?(?=\n## |\n# |$)/;
-              if (content.match(supportedSectionRegex)) {
-                content = content.replace(
-                  supportedSectionRegex,
-                  '## Supported versions\n\n' + versionList + '\n- [custom](https://docs.lando.dev/services/lando-3.html#overrides)\n\n'
-                );
-              }
+            // Build version list
+            const versionList = supported.map(v => {
+              const isDefault = v === latestVersion;
+              const bold = isDefault ? '**' : '';
+              return '- ' + bold + '[' + v + '](https://hub.docker.com/r/axllent/mailpit/)' + bold + (isDefault ? ' **(default)**' : '');
+            }).join('\n');
 
-              fs.writeFileSync(path, content);
-              console.log('Updated supported versions in docs/index.md');
+            let legacySection = '';
+            if (legacy.length > 0) {
+              legacySection = '\n\n> #### Warning::Legacy Versions\n> The following versions still work but are no longer officially supported: ' + legacy.join(', ') + '. We recommend upgrading.';
             }
+
+            const supportedSectionRegex = /## Supported versions[\s\S]*?(?=\n## |\n# |$)/;
+            if (content.match(supportedSectionRegex)) {
+              content = content.replace(
+                supportedSectionRegex,
+                '## Supported versions\n\n' + versionList + '\n- [custom](https://docs.lando.dev/services/lando-3.html#overrides)' + legacySection + '\n\n'
+              );
+            }
+
+            fs.writeFileSync(filePath, content);
+            console.log('Updated docs/index.md');
           "
+
+          # Update test file default version
+          if [ -f "test/mailpit.spec.js" ]; then
+            sed -i "s/DEFAULT_MAILPIT_VERSION = '[^']*'/DEFAULT_MAILPIT_VERSION = '$LATEST_VERSION'/" test/mailpit.spec.js
+            echo "Updated test/mailpit.spec.js"
+          fi
 
       - name: Create Pull Request
         if: steps.check-versions.outputs.needs_update == 'true'
@@ -219,20 +249,21 @@ jobs:
             Updated Mailpit to v${{ steps.check-versions.outputs.latest_version }}
 
             - Updated default version from ${{ steps.check-versions.outputs.current_default }} to ${{ steps.check-versions.outputs.latest_version }}
-            - Updated supported versions to latest 4 releases
-            - Updated examples and documentation (only highest supported version references)
+            - Updated supported versions (max 6, older moved to legacy)
+            - Updated examples and documentation
           title: "Updated Mailpit to v${{ steps.check-versions.outputs.latest_version }}"
           body: |
             ## Summary
             - Updates Mailpit plugin to use the latest version v${{ steps.check-versions.outputs.latest_version }}
-            - Updates supported versions list to include the 4 most recent releases
-            - Updates examples and documentation (only replaces highest supported version references)
+            - Keeps the 6 most recent minor versions in supported, older ones move to legacy
+            - Updates examples, documentation, and tests
 
             ## Changes
-            - **Plugin**: Updated default version in `builders/mailpit.js` to v${{ steps.check-versions.outputs.latest_version }}
-            - **Plugin**: Updated supported versions to latest 4 releases
-            - **Examples**: Updated `mailpit:${{ steps.check-versions.outputs.current_highest }}` → `mailpit:${{ steps.check-versions.outputs.latest_version }}` (preserves specific version examples)
-            - **Documentation**: Updated version references in README.md and docs/
+            - **Plugin**: Updated default version to v${{ steps.check-versions.outputs.latest_version }}
+            - **Plugin**: Updated supported/legacy version arrays
+            - **Examples**: Updated version references
+            - **Documentation**: Updated version references in README.md, docs/, and supported versions list
+            - **Tests**: Updated default version constant
             - **Changelog**: Added entry documenting the version update
 
             ---
