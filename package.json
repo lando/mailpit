@@ -1,7 +1,7 @@
 {
   "name": "@lando/mailpit",
   "description": "A Mailpit integration plugin for Lando.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "Aaron Feledy @AaronFeledy",
   "license": "MIT",
   "bugs": "https://github.com/lando/mailpit/issues/new",

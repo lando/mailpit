@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v1.1.0 - [February 23, 2026](https://github.com/lando/mailpit/releases/tag/v1.1.0)
+
 - Added Mailpit v1.28 and v1.29 support.
 - Set default Mailpit version to v1.29.
 - Moved Mailpit v1.25 to legacy versions.
