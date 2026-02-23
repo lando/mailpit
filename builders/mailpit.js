@@ -32,7 +32,7 @@ const setConfigOptions = require('../utils/set-config-options');
  */
 const defaultConfig = {
   version: '1.29',
-  supported: ['1.25', '1.26', '1.27', '1.28', '1.29'],
+  supported: ['1.26', '1.27', '1.28', '1.29'],
   mailFrom: ['appserver'],
   maxMessages: 500,
   port: 1025,
