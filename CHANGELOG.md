@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+- Bump @lando/argv from 1.1.2 to 1.2.0
+
 ## v1.1.0 - [February 23, 2026](https://github.com/lando/mailpit/releases/tag/v1.1.0)
 
 - Added Mailpit v1.28 and v1.29 support.
