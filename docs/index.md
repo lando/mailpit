@@ -77,4 +77,5 @@ To retrieve connection and credential details for your Mailpit instance, use the
 - [custom](https://docs.lando.dev/services/lando-3.html#overrides)
 
 > #### Warning::Legacy Versions
-> Mailpit v1.25 still works but is no longer officially supported. We recommend upgrading.
+> The following versions still work but are no longer officially supported: 1.25. We recommend upgrading.
+
