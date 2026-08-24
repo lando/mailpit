@@ -31,8 +31,9 @@ const setConfigOptions = require('../utils/set-config-options');
  * @type {MailpitConfig}
  */
 const defaultConfig = {
-  version: '1.30',
+  version: '1.31',
   supported: [
+    '1.31',
     '1.30',
     '1.29',
     '1.28',

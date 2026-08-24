@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+- Added Mailpit v1.31 support.
+- Set default Mailpit version to v1.31.
 - Added Mailpit v1.30 support.
 - Set default Mailpit version to v1.30.
 - Bump @lando/argv from 1.1.2 to 1.2.0
