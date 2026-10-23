@@ -30,7 +30,7 @@ Add a mailpit service to your landofile.
 ```yaml
 services:
   mailpit:
-    type: mailpit:1.31
+    type: mailpit:1.32
     mailFrom: # Defaults to appserver.
       - appserver
 
@@ -70,14 +70,14 @@ To retrieve connection and credential details for your Mailpit instance, use the
 
 ## Supported versions
 
-- **[1.31](https://hub.docker.com/r/axllent/mailpit/)** **(default)**
+- **[1.32](https://hub.docker.com/r/axllent/mailpit/)** **(default)**
+- [1.31](https://hub.docker.com/r/axllent/mailpit/)
 - [1.30](https://hub.docker.com/r/axllent/mailpit/)
 - [1.29](https://hub.docker.com/r/axllent/mailpit/)
 - [1.28](https://hub.docker.com/r/axllent/mailpit/)
 - [1.27](https://hub.docker.com/r/axllent/mailpit/)
-- [1.26](https://hub.docker.com/r/axllent/mailpit/)
 - [custom](https://docs.lando.dev/services/lando-3.html#overrides)
 
 > #### Warning::Legacy Versions
-> The following versions still work but are no longer officially supported: 1.25. We recommend upgrading.
+> The following versions still work but are no longer officially supported: 1.26, 1.25. We recommend upgrading.
 
