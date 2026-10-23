@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+- Added Mailpit v1.32 support.
+- Set default Mailpit version to v1.32.
 - Added Mailpit v1.31 support.
 - Set default Mailpit version to v1.31.
 - Added Mailpit v1.30 support.
