@@ -6,7 +6,7 @@ next: ./config.html
 
 # Mailpit Integration for Lando
 
-The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Lando](https://lando.dev). Mailpit is a modern email testing tool for developers that makes it easy to test email sending in your local development environment.
+The official [Mailpit](https://mailpit.axllent.org) integration plugin for [Lando](https://www.lando.dev/). Mailpit is a modern email testing tool for developers that makes it easy to test email sending in your local development environment.
 
 ## Features
 
